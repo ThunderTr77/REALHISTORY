@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>25CGD1-Group13-Level</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="../css/menu.css">
+  
+</head>
+<body>
+  <!-- Background -->
+  <div class="menu-bg"></div>
+  <div class="overlay"></div>
+  
+  <!-- Back button -->
+  <button class="back-btn" onclick="goBack()">
+    <i class="fas fa-arrow-left"></i> Quay lại
+  </button>
+  
+  <!-- Main container -->
+  <div class="menu-container">
+    <div class="levels-grid">
+      <!-- Màn 1 -->
+      <div class="level-btn" onclick="startLevel(1)">
+        <div class="level-icon">🎯</div>
+        <div class="level-number">1</div>
+        <div class="level-label">Màn 1</div>
+      </div>
+      
+      <!-- Màn 2 -->
+      <div class="level-btn locked" onclick="startLevel(2)">
+        <div class="level-icon">🔒</div>
+        <div class="level-number">2</div>
+        <div class="level-label">Màn 2</div>
+      </div>
+      
+      <!-- Màn 3 -->
+      <div class="level-btn locked" onclick="startLevel(3)">
+        <div class="level-icon">🔒</div>
+        <div class="level-number">3</div>
+        <div class="level-label">Màn 3</div>
+      </div>
+      
+      <!-- Màn 4 -->
+      <div class="level-btn locked" onclick="startLevel(4)">
+        <div class="level-icon">🔒</div>
+        <div class="level-number">4</div>
+        <div class="level-label">Màn 4</div>
+      </div>
+      
+      <!-- Màn 5 (Boss) -->
+      <div class="level-btn locked" onclick="startLevel(5)">
+        <div class="level-icon">👑</div>
+        <div class="level-number">5</div>
+        <div class="level-label">Boss</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==================== LOAD PROGRESS ====================
+    let completedLevels = JSON.parse(localStorage.getItem('completedLevels') || '[]');
+    let currentUnlockedLevel = parseInt(localStorage.getItem('currentUnlockedLevel') || '1');
+    
+    // ==================== UPDATE LEVEL STATES ====================
+    function updateLevelStates() {
+      const levelBtns = document.querySelectorAll('.level-btn');
+      
+      levelBtns.forEach((btn, index) => {
+        const level = index + 1;
+        
+        // Unlock levels up to currentUnlockedLevel
+        if (level <= currentUnlockedLevel) {
+          btn.classList.remove('locked');
+          const icon = btn.querySelector('.level-icon');
+          
+          // Set appropriate icon for unlocked levels
+          if (level === 1) icon.textContent = '⭐';
+          else if (level === 2) icon.textContent = '🏆';
+          else if (level === 3) icon.textContent = '🔥';
+          else if (level === 4) icon.textContent = '💥';
+          else if (level === 5) icon.textContent = '👑';
+        }
+        
+        // Mark completed levels
+        if (completedLevels.includes(level)) {
+          btn.classList.add('completed');
+        }
+      });
+    }
+    
+    updateLevelStates();
+    
+    // ==================== CREATE FLOATING PARTICLES ====================
+    function createParticles() {
+      for (let i = 0; i < 30; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.top = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 4 + 's';
+        particle.style.animationDuration = (3 + Math.random() * 3) + 's';
+        document.body.appendChild(particle);
+      }
+    }
+    
+    createParticles();
+    
+    // ==================== START LEVEL ====================
+    function startLevel(level) {
+      const levelBtn = document.querySelectorAll('.level-btn')[level - 1];
+      
+      // Check if locked
+      if (levelBtn.classList.contains('locked')) {
+        alert('🔒 Màn này chưa mở khóa!\nHãy hoàn thành màn trước đó để mở khóa.');
+        return;
+      }
+      
+      // Redirect to level page
+      window.location.href = `man${level}.html`;
+    }
+    
+    // ==================== GO BACK ====================
+    function goBack() {
+      window.location.href = '../index.html';
+    }
+    
+    // ==================== KEYBOARD SUPPORT ====================
+    document.addEventListener('keydown', (e) => {
+      if (e.key >= '1' && e.key <= '5') {
+        const level = parseInt(e.key);
+        startLevel(level);
+      } else if (e.key === 'Escape') {
+        goBack();
+      }
+    });
+    
+    // ==================== DEBUG INFO (Xóa khi release) ====================
+    console.log('Completed Levels:', completedLevels);
+    console.log('Current Unlocked Level:', currentUnlockedLevel);
+  </script>
+</body>
+</html>

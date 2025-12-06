@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Chiến Thắng</title>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  
+  <style>
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body, html {
+      overflow: hidden;
+      background: #000;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      height: 100vh;
+      width: 100vw;
+      position: fixed;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    
+    @media (max-width: 768px) {
+      body, html {
+        height: 100dvh;
+      }
+    }
+  </style>
+</head>
+<body>
+
+
+<audio id="bgAudio" autoplay loop muted preload="auto">
+  <source src="../sound/fire.mp3" type="audio/mpeg">
+</audio>
+
+
+<canvas id="canvas"></canvas>
+
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+
+// ========== FIX CANVAS SIZE ===========
+function resizeCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  
+  ctx.scale(dpr, dpr);
+  
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+}
+
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+
+function getDisplaySize() {
+  return {
+    width: canvas.getBoundingClientRect().width,
+    height: canvas.getBoundingClientRect().height
+  };
+}
+
+
+// ========== AUDIO SETUP ==========
+const bgAudio = document.getElementById('bgAudio');
+
+
+window.addEventListener('load', () => {
+  bgAudio.muted = false;
+  bgAudio.pause();
+});
+
+
+const fireSound = new Audio('../sound/fire.mp3');
+const hitSound = new Audio('../sound/hit.wav');
+const tankRunSound = new Audio('../sound/xechay.mp3');
+
+
+fireSound.volume = 0.8;
+hitSound.volume = 0.9;
+tankRunSound.volume = 0.7;
+tankRunSound.loop = true;
+
+
+function playFireSound() {
+  fireSound.currentTime = 0;
+  fireSound.play().then(() => {
+    console.log('✅ 🔫 Fire sound!');
+  }).catch(err => console.log('Fire sound error:', err));
+}
+
+
+function playHitSound() {
+  hitSound.currentTime = 0;
+  hitSound.play().then(() => {
+    console.log('✅ 💥 Hit sound!');
+  }).catch(err => console.log('Hit sound error:', err));
+}
+
+
+function playTankRunSound() {
+  tankRunSound.currentTime = 0;
+  tankRunSound.play().then(() => {
+    console.log('✅ 🚗 Tank run sound!');
+  }).catch(err => console.log('Tank run sound error:', err));
+}
+
+
+function stopTankRunSound() {
+  tankRunSound.pause();
+  tankRunSound.currentTime = 0;
+}
+
+
+// ============ DURATION ============
+const BULLET_DURATION = 2000;     
+const EXPLOSION_DURATION = 4000;  
+const MUZZLE_DELAY = 500;
+const BULLET_DELAY = 300;
+
+
+let phase = 'prepare';
+let phaseStartTime = 0; 
+let tankH;
+let tankVNPosX;
+let tankEnemyPosX;
+let tankY;
+
+
+let muzzleFlash = { active: false, x: 0, y: 0, frame: 0, maxFrame: 10 };
+let bullet = null;
+let combinedParticles = [];
+let tankFireParticles = [];
+let victoryText = {
+  active: false,
+  alpha: 0,
+  scale: 0
+};
+
+
+const rocketFont = "300 32px 'Font Awesome 6 Free'";
+let rockets = [];
+
+
+// ========== IMAGES ==========
+const bgImage = new Image();
+const tankVN = new Image();
+const tankEnemy = new Image();
+
+
+bgImage.src = '../image/bg.jpg';
+tankVN.src = '../image/tank1.png';
+tankEnemy.src = '../image/tank2.png';
+
+
+let loaded = 0;
+function onLoaded() {
+  loaded++;
+  if (loaded === 3) startAnimation();
+}
+
+
+bgImage.onload = onLoaded;
+bgImage.onerror = () => { loaded++; if (loaded === 3) startAnimation(); };
+tankVN.onload = onLoaded;
+tankVN.onerror = () => { loaded++; if (loaded === 3) startAnimation(); };
+tankEnemy.onload = onLoaded;
+tankEnemy.onerror = () => { loaded++; if (loaded === 3) startAnimation(); };
+
+
+// ========== ROCKET ==========
+function spawnRocket() {
+  const size = getDisplaySize();
+  const fromLeft = Math.random() < 0.5;
+  const margin = size.width * 0.1;
+  const startX = fromLeft ? -margin : size.width + margin;
+  const endX = fromLeft ? size.width + margin : -margin;
+
+
+  rockets.push({
+    fromLeft, startX, endX,
+    yBase: size.height * (0.15 + Math.random() * 0.2),
+    height: size.height * (0.08 + Math.random() * 0.08),
+    t: 0,
+    speed: 0.002 + Math.random() * 0.003
+  });
+}
+
+
+function getBallisticPos(startX, endX, baseY, height, t) {
+  const x = startX + (endX - startX) * t;
+  const parabola = 4 * t * (1 - t);
+  const y = baseY - height * parabola;
+  return { x, y };
+}
+
+
+function updateRockets() {
+  rockets.forEach(r => { r.t += r.speed; });
+  rockets = rockets.filter(r => {
+    if (r.t > 1.1) { spawnRocket(); return false; }
+    return true;
+  });
+  while (rockets.length < 5) spawnRocket();
+}
+
+
+function drawRockets() {
+  ctx.save();
+  ctx.font = rocketFont;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  rockets.forEach(r => {
+    const pos = getBallisticPos(r.startX, r.endX, r.yBase, r.height, r.t);
+    const angle = r.fromLeft ? Math.atan2(0.3, 1) : Math.atan2(-0.3, -1);
+    ctx.save();
+    ctx.translate(pos.x, pos.y);
+    ctx.rotate(angle);
+    ctx.fillStyle = '#555';
+    ctx.fillText('🚀', 0, 0);
+    ctx.restore();
+  });
+  ctx.restore();
+}
+
+
+// ========== MUZZLE FLASH ==========
+function startMuzzleFlash(x, y) {
+  muzzleFlash.active = true;
+  muzzleFlash.x = x;
+  muzzleFlash.y = y;
+  muzzleFlash.frame = 0;
+  
+  playFireSound();
+}
+
+
+function updateMuzzleFlash() {
+  if (muzzleFlash.active) {
+    muzzleFlash.frame++;
+    if (muzzleFlash.frame >= muzzleFlash.maxFrame) {
+      muzzleFlash.active = false;
+    }
+  }
+}
+
+
+function drawMuzzleFlash() {
+  if (!muzzleFlash.active) return;
+  
+  let x = muzzleFlash.x;
+  let y = muzzleFlash.y;
+  let frame = muzzleFlash.frame;
+  let maxFrame = muzzleFlash.maxFrame;
+  
+  let progress = frame / maxFrame;
+  let alpha = 1 - progress;
+  let size = 50 + (1 - progress) * 40;
+  
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  
+  let gradient = ctx.createRadialGradient(x, y, 0, x, y, size);
+  gradient.addColorStop(0, '#fff');
+  gradient.addColorStop(0.3, '#ffff00');
+  gradient.addColorStop(0.6, '#ff8800');
+  gradient.addColorStop(1, 'rgba(255,0,0,0)');
+  
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(x, y, size, 0, Math.PI * 2);
+  ctx.fill();
+  
+  for (let i = 0; i < 10; i++) {
+    let angle = (Math.PI * 2 * i) / 10 + progress * 0.3;
+    let length = size * (0.6 + Math.random() * 0.4);
+    let endX = x + Math.cos(angle) * length;
+    let endY = y + Math.sin(angle) * length;
+    
+    ctx.strokeStyle = `rgba(255, 200, 0, ${alpha})`;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+  }
+  
+  ctx.restore();
+}
+
+
+// ========== BULLET ==========
+function createBullet(startX, startY, targetX, targetY, duration) {
+  return {
+    startX, startY, x: startX, y: startY,
+    targetX, targetY,
+    startTime: Date.now(),
+    duration, active: true,
+    trail: [], rotation: 0
+  };
+}
+
+
+function updateBullet() {
+  if (!bullet || !bullet.active) return;
+  
+  let elapsed = Date.now() - bullet.startTime;
+  let progress = Math.min(elapsed / bullet.duration, 1);
+  
+  bullet.x = bullet.startX + (bullet.targetX - bullet.startX) * progress;
+  bullet.y = bullet.startY + (bullet.targetY - bullet.startY) * progress;
+  bullet.rotation += 0.3;
+  
+  bullet.trail.push({ x: bullet.x, y: bullet.y, alpha: 1 });
+  if (bullet.trail.length > 20) bullet.trail.shift();
+  
+  bullet.trail.forEach((t, i) => {
+    t.alpha = (i + 1) / bullet.trail.length;
+  });
+  
+  if (progress >= 1) {
+    bullet.active = false;
+  }
+}
+
+
+function drawBullet() {
+  if (!bullet || !bullet.active) return;
+  
+  ctx.save();
+  
+  bullet.trail.forEach((point, i) => {
+    let size = 8 * point.alpha;
+    ctx.fillStyle = `rgba(255, 200, 50, ${point.alpha * 0.6})`;
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  
+  ctx.translate(bullet.x, bullet.y);
+  
+  let outerGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, 25);
+  outerGlow.addColorStop(0, 'rgba(255, 255, 100, 0.8)');
+  outerGlow.addColorStop(0.5, 'rgba(255, 150, 0, 0.5)');
+  outerGlow.addColorStop(1, 'rgba(255, 100, 0, 0)');
+  ctx.fillStyle = outerGlow;
+  ctx.beginPath();
+  ctx.arc(0, 0, 25, 0, Math.PI * 2);
+  ctx.fill();
+  
+  let coreGradient = ctx.createRadialGradient(-3, -3, 0, 0, 0, 15);
+  coreGradient.addColorStop(0, '#ffffff');
+  coreGradient.addColorStop(0.3, '#ffff00');
+  coreGradient.addColorStop(0.7, '#ff8800');
+  coreGradient.addColorStop(1, '#ff3300');
+  ctx.fillStyle = coreGradient;
+  ctx.beginPath();
+  ctx.arc(0, 0, 15, 0, Math.PI * 2);
+  ctx.fill();
+  
+  ctx.rotate(bullet.rotation);
+  ctx.strokeStyle = '#ffcc00';
+  ctx.lineWidth = 3;
+  for (let i = 0; i < 4; i++) {
+    let angle = (Math.PI / 2) * i;
+    ctx.beginPath();
+    ctx.arc(0, 0, 18, angle, angle + Math.PI / 4);
+    ctx.stroke();
+  }
+  
+  ctx.restore();
+}
+
+
+// ========== TANK FIRE ==========
+function spawnTankFire(cx, cy) {
+  tankFireParticles = [];
+  for (let i = 0; i < 30; i++) {
+    tankFireParticles.push({
+      offsetX: (Math.random() - 0.5) * 100,
+      offsetY: (Math.random() - 0.5) * 60,
+      size: 10 + Math.random() * 20,
+      life: 40 + Math.random() * 40,
+      maxLife: 40 + Math.random() * 40,
+      vy: -0.5 - Math.random() * 1.5
+    });
+  }
+}
+
+
+function updateTankFire(cx, cy) {
+  tankFireParticles.forEach(p => {
+    p.offsetY += p.vy;
+    p.life--;
+  });
+  
+  tankFireParticles = tankFireParticles.filter(p => p.life > 0);
+  
+  if (Math.random() < 0.3) {
+    tankFireParticles.push({
+      offsetX: (Math.random() - 0.5) * 100,
+      offsetY: (Math.random() - 0.5) * 30,
+      size: 10 + Math.random() * 20,
+      life: 40 + Math.random() * 40,
+      maxLife: 40 + Math.random() * 40,
+      vy: -0.5 - Math.random() * 1.5
+    });
+  }
+}
+
+
+function drawTankFire(cx, cy) {
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  
+  tankFireParticles.forEach(p => {
+    let alpha = p.life / p.maxLife;
+    let x = cx + p.offsetX;
+    let y = cy + p.offsetY;
+    
+    let gradient = ctx.createRadialGradient(x, y, 0, x, y, p.size);
+    gradient.addColorStop(0, `rgba(255, 255, 100, ${alpha})`);
+    gradient.addColorStop(0.4, `rgba(255, 150, 0, ${alpha * 0.8})`);
+    gradient.addColorStop(1, `rgba(255, 0, 0, 0)`);
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(x, y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.restore();
+}
+
+
+// ========== EXPLOSION - ✅ FIX: ĐỔI const → let ==========
+function startCombinedExplosion(cx, cy, duration) {
+  playHitSound();
+  
+  combinedParticles = [];
+  let frames = (duration / 1000) * 60; // ✅ ĐỔI const → let
+  
+  for (let i = 0; i < 200; i++) {
+    let angle = Math.random() * Math.PI * 2;
+    let rand = Math.random();
+    let type, speed;
+    
+    if (rand < 0.5) {
+      type = 'fire';
+      speed = 2 + Math.random() * 5;
+    } else if (rand < 0.75) {
+      type = 'spark';
+      speed = 3 + Math.random() * 6;
+    } else {
+      type = 'smoke';
+      speed = 0.5 + Math.random() * 2;
+      angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.8;
+    }
+    
+    combinedParticles.push({
+      x: cx + (Math.random() - 0.5) * 30,
+      y: cy + (Math.random() - 0.5) * 30,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      size: type === 'smoke' ? 25 + Math.random() * 50 : 12 + Math.random() * 30,
+      life: frames,
+      maxLife: frames,
+      type: type,
+      expansion: type === 'smoke' ? 0.5 + Math.random() * 0.8 : 0
+    });
+  }
+  
+  spawnTankFire(cx, cy);
+}
+
+
+function updateCombinedExplosion() {
+  combinedParticles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    
+    if (p.type === 'smoke') {
+      p.vy -= 0.03;
+      p.vx *= 0.98;
+      p.size += p.expansion;
+    } else {
+      p.vy += 0.12;
+      p.vx *= 0.98;
+    }
+    
+    p.life--;
+  });
+  
+  combinedParticles = combinedParticles.filter(p => p.life > 0);
+}
+
+
+function drawCombinedExplosion() {
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  
+  combinedParticles.forEach(p => {
+    let alpha = p.life / p.maxLife;
+    
+    if (p.type === 'fire') {
+      let gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+      gradient.addColorStop(0, `rgba(255, 255, 200, ${alpha})`);
+      gradient.addColorStop(0.3, `rgba(255, 200, 0, ${alpha * 0.9})`);
+      gradient.addColorStop(0.6, `rgba(255, 100, 0, ${alpha * 0.7})`);
+      gradient.addColorStop(1, `rgba(255, 0, 0, 0)`);
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+      
+    } else if (p.type === 'spark') {
+      ctx.fillStyle = `rgba(255, 255, 150, ${alpha})`;
+      ctx.shadowColor = '#ffff00';
+      ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      
+    } else if (p.type === 'smoke') {
+      let gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+      gradient.addColorStop(0, `rgba(40, 40, 40, ${alpha * 0.8})`);
+      gradient.addColorStop(0.5, `rgba(70, 70, 70, ${alpha * 0.5})`);
+      gradient.addColorStop(1, `rgba(100, 100, 100, 0)`);
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+  
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.restore();
+}
+
+
+// ========== VICTORY TEXT ==========
+function updateVictoryText() {
+  if (victoryText.active) {
+    if (victoryText.alpha < 1) victoryText.alpha += 0.02;
+    if (victoryText.scale < 1) victoryText.scale += 0.03;
+  }
+}
+
+
+function drawVictoryText() {
+  if (!victoryText.active) return;
+  
+  let size = getDisplaySize();
+  
+  ctx.save();
+  ctx.globalAlpha = victoryText.alpha;
+  ctx.translate(size.width / 2, size.height * 0.3);
+  ctx.scale(victoryText.scale, victoryText.scale);
+  
+  ctx.shadowColor = '#ff0';
+  ctx.shadowBlur = 40;
+  
+  ctx.font = 'bold 80px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  
+  ctx.strokeStyle = '#ffd700';
+  ctx.lineWidth = 8;
+  ctx.strokeText('CHIẾN THẮNG', 0, 0);
+  
+  let gradient = ctx.createLinearGradient(0, -40, 0, 40);
+  gradient.addColorStop(0, '#ff0000');
+  gradient.addColorStop(0.5, '#ff6600');
+  gradient.addColorStop(1, '#ff0000');
+  ctx.fillStyle = gradient;
+  ctx.fillText('CHIẾN THẮNG', 0, 0);
+  
+  ctx.font = '50px "Font Awesome 6 Free"';
+  ctx.fillStyle = '#ffd700';
+  ctx.fillText('\uf005', -250, 0);
+  ctx.fillText('\uf005', 250, 0);
+  
+  ctx.restore();
+}
+
+
+// ========== TANK DRAWING ==========
+function drawDust(x, y, scale) {
+  ctx.fillStyle = 'rgba(139,69,19,0.5)';
+  for (let i = 0; i < 10; i++) {
+    let dx = Math.random() * 60 * scale;
+    let dy = Math.random() * 8 * scale;
+    ctx.beginPath();
+    ctx.ellipse(x - dx, y + dy, 8 * scale, 4 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+
+function drawTank(img, x, y) {
+  if (!img.complete) return { w: 0, h: 0 };
+  
+  let scale = tankH / 55;
+  let w = 90 * scale;
+  let h = tankH;
+  
+  ctx.drawImage(img, x, y, w, h);
+  return { w, h };
+}
+
+
+function drawTankVN(x, y) {
+  let scale = tankH / 55;
+  let w = 90 * scale;
+  if (phase === 'moving') {
+    drawDust(x + w * 0.2, y + tankH * 0.95, scale);
+  }
+  return drawTank(tankVN, x, y);
+}
+
+
+// ========== MAIN ANIMATION ==========
+function startAnimation() {
+  let size = getDisplaySize();
+  
+  tankH = size.height * 0.25;
+  tankY = size.height * 0.65;
+  
+  let scale = tankH / 55;
+  let tankW = 90 * scale;
+  let gap = size.width * 0.35;
+  
+  tankVNPosX = size.width * 0.15;
+  tankEnemyPosX = tankVNPosX + tankW + gap;
+  
+  for (let i = 0; i < 5; i++) spawnRocket();
+  
+  // TIMELINE
+  setTimeout(() => {
+    phase = 'muzzle_flash';
+    let muzzleX = tankVNPosX + tankW;
+    let muzzleY = tankY + tankH * 0.4;
+    startMuzzleFlash(muzzleX, muzzleY);
+  }, MUZZLE_DELAY);
+  
+  setTimeout(() => {
+    phase = 'shooting';
+    let muzzleX = tankVNPosX + tankW;
+    let muzzleY = tankY + tankH * 0.4;
+    let targetX = tankEnemyPosX + (90 * scale) / 2;
+    let targetY = tankY + tankH / 2;
+    bullet = createBullet(muzzleX, muzzleY, targetX, targetY, BULLET_DURATION);
+  }, MUZZLE_DELAY + BULLET_DELAY);
+  
+  setTimeout(() => {
+    phase = 'exploding';
+    phaseStartTime = Date.now();
+    let enemyW = 90 * scale;
+    startCombinedExplosion(tankEnemyPosX + enemyW / 2, tankY + tankH / 2, EXPLOSION_DURATION);
+  }, MUZZLE_DELAY + BULLET_DELAY + BULLET_DURATION);
+  
+  setTimeout(() => {
+    phase = 'moving';
+    victoryText.active = true;
+    playTankRunSound();
+  }, MUZZLE_DELAY + BULLET_DELAY + BULLET_DURATION + EXPLOSION_DURATION);
+
+
+  function loop() {
+    if (phase === 'ended') return;
+    
+    let size = getDisplaySize();
+    ctx.clearRect(0, 0, size.width, size.height);
+    
+    if (bgImage.complete) {
+      ctx.drawImage(bgImage, 0, 0, size.width, size.height);
+    }
+    
+    updateRockets();
+    drawRockets();
+    
+    drawTankVN(tankVNPosX, tankY);
+    
+    if (phase === 'prepare' || phase === 'muzzle_flash' || phase === 'shooting') {
+      drawTank(tankEnemy, tankEnemyPosX, tankY);
+    }
+    
+    if (phase === 'muzzle_flash' || phase === 'shooting') {
+      updateMuzzleFlash();
+      drawMuzzleFlash();
+    }
+    
+    if (phase === 'shooting') {
+      updateBullet();
+      drawBullet();
+    }
+    
+    if (phase === 'exploding') {
+      let elapsed = Date.now() - phaseStartTime;
+      let progress = elapsed / EXPLOSION_DURATION;
+      
+      let scale = tankH / 55;
+      let enemyW = 90 * scale;
+      let enemyCenterX = tankEnemyPosX + enemyW / 2;
+      let enemyCenterY = tankY + tankH / 2;
+      
+      let shakeX = 0, shakeY = 0;
+      if (elapsed < 1000) {
+        shakeX = (Math.random() - 0.5) * 10;
+        shakeY = (Math.random() - 0.5) * 10;
+      }
+      
+      let fadeAlpha = Math.max(0, 1 - progress * 0.7);
+      
+      ctx.save();
+      ctx.globalAlpha = fadeAlpha;
+      drawTank(tankEnemy, tankEnemyPosX + shakeX, tankY + shakeY);
+      ctx.restore();
+      
+      updateTankFire(enemyCenterX, enemyCenterY);
+      drawTankFire(enemyCenterX, enemyCenterY);
+      
+      updateCombinedExplosion();
+      drawCombinedExplosion();
+    }
+    
+    if (phase === 'moving') {
+      tankVNPosX += 2.5;
+      updateVictoryText();
+      drawVictoryText();
+      
+      if (tankVNPosX > size.width) {
+        phase = 'ended';
+        stopTankRunSound();
+      }
+    }
+    
+    requestAnimationFrame(loop);
+  }
+  
+  loop();
+}
+
+
+// Cleanup
+window.addEventListener('beforeunload', () => {
+  stopTankRunSound();
+});
+
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => {
+    resizeCanvas();
+    window.scrollTo(0, 0);
+  }, 100);
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (fireSound) fireSound.pause();
+    if (hitSound) hitSound.pause();
+    if (tankRunSound) tankRunSound.pause();
+  }
+});
+
+if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', (e) => {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) {
+      e.preventDefault();
+    }
+    lastTouchEnd = now;
+  }, false);
+}
+</script>
+</body>
+</html>

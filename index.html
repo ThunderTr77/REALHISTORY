@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>25CGD1-Group13-index</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+    }
+    
+    body, html {
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'Arial', sans-serif;
+    }
+    
+  
+    .menu-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    .menu-bg img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      filter: brightness(0.6);
+    }
+    
+   
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(139,0,0,0.5) 100%);
+      z-index: 2;
+    }
+    
+  
+    .menu-container {
+      position: relative;
+      z-index: 3;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: 75vh;
+    }
+    
+
+
+    .battle-button {
+      position: relative;
+      padding: 25px 80px;
+      font-size: 42px;
+      font-weight: bold;
+      color: #fff;
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 50%, #c92a2a 100%);
+      border: 4px solid #ffd700;
+      border-radius: 15px;
+      cursor: pointer;
+      box-shadow: 
+        0 10px 30px rgba(255, 107, 107, 0.5),
+        0 0 50px rgba(255, 215, 0, 0.3),
+        inset 0 -5px 20px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 6px;
+      animation: fadeInUp 1.5s ease-out, pulse 2s infinite;
+      overflow: hidden;
+      transform: translateY(-50%);
+    }
+    
+    .battle-button::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+    
+    .battle-button:hover::before {
+      width: 400px;
+      height: 400px;
+    }
+    
+    .battle-button:hover {
+      transform: translateY(-50%) translateY(-8px) scale(1.05);
+      box-shadow: 
+        0 15px 40px rgba(255, 107, 107, 0.8),
+        0 0 80px rgba(255, 215, 0, 0.6),
+        inset 0 -5px 20px rgba(0, 0, 0, 0.3);
+      border-color: #fff;
+    }
+    
+    .battle-button:active {
+      transform: translateY(-50%) translateY(-4px) scale(1.02);
+    }
+    
+    .battle-icon {
+      margin-right: 15px;
+      animation: rotate 3s linear infinite;
+    }
+    
+   
+    .particle {
+      position: fixed;
+      width: 4px;
+      height: 4px;
+      background: #ffd700;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 2;
+      animation: float 4s infinite ease-in-out;
+      box-shadow: 0 0 10px #ffd700;
+    }
+    
+
+
+    .corner-decor {
+      position: fixed;
+      font-size: 80px;
+      color: rgba(255, 215, 0, 0.3);
+      z-index: 2;
+      animation: pulse 3s infinite;
+    }
+    
+    .corner-tl { top: 20px; left: 20px; }
+    .corner-tr { top: 20px; right: 20px; }
+    .corner-bl { bottom: 20px; left: 20px; }
+    .corner-br { bottom: 20px; right: 20px; }
+    
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(-50%) translateY(100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(-50%);
+      }
+    }
+    
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 0.7;
+      }
+      50% {
+        transform: scale(1.1);
+        opacity: 1;
+      }
+    }
+    
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0) translateX(0);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      90% {
+        opacity: 1;
+      }
+      50% {
+        transform: translateY(-80vh) translateX(20px);
+      }
+    }
+    
+  
+    @media (max-width: 768px) {
+      .battle-button { 
+        font-size: 32px; 
+        padding: 20px 50px;
+        letter-spacing: 3px;
+      }
+      .corner-decor { font-size: 50px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Background -->
+  <div class="menu-bg">
+    <img src="../image/bgg.jpg" alt="Background">
+  </div>
+  <div class="overlay"></div>
+  
+  <!-- Decorative corners -->
+  <div class="corner-decor corner-tl"><i class="fas fa-shield-alt"></i></div>
+  <div class="corner-decor corner-tr"><i class="fas fa-star"></i></div>
+  <div class="corner-decor corner-bl"><i class="fas fa-crosshairs"></i></div>
+  <div class="corner-decor corner-br"><i class="fas fa-trophy"></i></div>
+  
+  <!-- Main container -->
+  <div class="menu-container">
+  
+    <button class="battle-button" onclick="startGame()">
+      <i class="fas fa-fist-raised battle-icon"></i>
+      <span>CHIẾN ĐẤU</span>
+    </button>
+  </div>
+
+
+  <script>
+   
+    function createParticles() {
+      for (let i = 0; i < 30; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.top = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 4 + 's';
+        particle.style.animationDuration = (3 + Math.random() * 3) + 's';
+        document.body.appendChild(particle);
+      }
+    }
+    
+    createParticles();
+    
+
+
+    function startGame() {
+   
+      const button = document.querySelector('.battle-button');
+      button.style.transform = 'translateY(-50%) scale(0.95)';
+      
+      setTimeout(() => {
+    
+        localStorage.setItem('currentQuestion', '0');
+        localStorage.setItem('score', '0');
+        
+
+
+        window.location.href = 'html/menu.html';
+      }, 200);
+    }
+    
+  
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        startGame();
+      }
+    });
+  </script>
+</body>
+</html>

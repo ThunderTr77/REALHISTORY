@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Loading </title>
+  
+  <style>
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body, html {
+      overflow: hidden;
+      background: #000;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      height: 100vh;
+      position: fixed;
+      width: 100%;
+    }
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+    
+    /* Nút unmute nếu cần */
+    #unmuteBtn {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: rgba(255, 215, 0, 0.95);
+      color: #000;
+      border: none;
+      padding: 15px 25px;
+      border-radius: 50px;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 5px 20px rgba(255, 215, 0, 0.5);
+      z-index: 1000;
+      display: none;
+      animation: pulse 1.5s infinite;
+      user-select: none;
+      min-width: 60px;
+      min-height: 60px;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    
+    @media (max-width: 768px) {
+      #unmuteBtn {
+        bottom: 15px;
+        right: 15px;
+        padding: 12px 20px;
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+
+
+<audio id="tankSound" autoplay loop preload="auto">
+  <source src="../sound/xechay.mp3" type="audio/mpeg">
+</audio>
+
+
+
+<button id="unmuteBtn" onclick="unmute()">🔊</button>
+
+
+<canvas id="canvas"></canvas>
+
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const tankSound = document.getElementById('tankSound');
+const unmuteBtn = document.getElementById('unmuteBtn');
+
+
+function resizeCanvas() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+
+// ========== AUDIO CONTROL ==========
+tankSound.volume = 0.7;
+
+
+
+tankSound.addEventListener('play', () => {
+  console.log('✅ Âm thanh đang phát!');
+  unmuteBtn.style.display = 'none';
+});
+
+
+tankSound.addEventListener('pause', () => {
+  console.log('⚠️ Âm thanh bị pause!');
+  unmuteBtn.style.display = 'block';
+});
+
+
+
+window.addEventListener('load', () => {
+  tankSound.play().then(() => {
+    console.log('✅ Autoplay thành công!');
+  }).catch(err => {
+    console.log('⚠️ Autoplay bị chặn, hiện nút unmute');
+    unmuteBtn.style.display = 'block';
+  });
+});
+
+
+
+function unmute() {
+  tankSound.muted = false;
+  tankSound.volume = 0.7;
+  tankSound.play();
+  unmuteBtn.style.display = 'none';
+}
+
+
+document.addEventListener('click', () => {
+  if (tankSound.paused) {
+    tankSound.play();
+  }
+}, { once: true });
+
+
+function fadeOutSound(duration = 500) {
+  const startVolume = tankSound.volume;
+  const fadeStep = startVolume / (duration / 50);
+  
+  const fadeInterval = setInterval(() => {
+    if (tankSound.volume > fadeStep) {
+      tankSound.volume -= fadeStep;
+    } else {
+      tankSound.volume = 0;
+      tankSound.pause();
+      clearInterval(fadeInterval);
+    }
+  }, 50);
+}
+
+
+// =================================
+
+
+const bgImage   = new Image();
+const tankVN    = new Image();
+const tankEnemy = new Image();
+
+
+bgImage.src   = '../image/bg.jpg';
+tankVN.src    = '../image/tank1.png';
+tankEnemy.src = '../image/tank2.png';
+
+
+let loaded = 0;
+
+
+function onLoaded() {
+  loaded++;
+  if (loaded === 3) {
+    startAnimation();
+  }
+}
+bgImage.onload   = onLoaded;
+tankVN.onload    = onLoaded;
+tankEnemy.onload = onLoaded;
+
+
+// --------- trạng thái ----------
+let tankH;
+let tankVNPosX;
+let tankEnemyPosX;
+let collided = false;
+let collisionFrame = 0;
+let showQuestion = false;
+let questionAlpha = 0;
+
+
+const moveTime = 17;
+const fps = 60;
+const framesToCollide = moveTime * fps;
+
+
+let particles = [];
+let rockets = [];
+
+
+// --------- ROCKET ----------
+const rocketFont = "300 32px 'Font Awesome 6 Free'";
+
+
+function spawnRocket() {
+  const fromLeft = Math.random() < 0.5;
+  const margin = canvas.width * 0.1;
+  const startX = fromLeft ? -margin : canvas.width + margin;
+  const endX   = fromLeft ? canvas.width + margin : -margin;
+
+
+  rockets.push({
+    fromLeft,
+    startX,
+    endX,
+    yBase: canvas.height * (0.15 + Math.random() * 0.2),
+    height: canvas.height * (0.08 + Math.random() * 0.08),
+    t: 0,
+    speed: 0.002 + Math.random() * 0.003
+  });
+}
+
+
+function getBallisticPos(startX, endX, baseY, height, t) {
+  const x = startX + (endX - startX) * t;
+  const parabola = 4 * t * (1 - t);
+  const y = baseY - height * parabola;
+  return { x, y };
+}
+
+
+function updateRockets() {
+  rockets.forEach(r => { r.t += r.speed; });
+  rockets = rockets.filter(r => {
+    if (r.t > 1.1) {
+      spawnRocket();
+      return false;
+    }
+    return true;
+  });
+  while (rockets.length < 5) spawnRocket();
+}
+
+
+function drawRockets() {
+  ctx.save();
+  ctx.font = rocketFont;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+
+  rockets.forEach(r => {
+    const pos = getBallisticPos(r.startX, r.endX, r.yBase, r.height, r.t);
+    const angle = r.fromLeft ? Math.atan2(0.3, 1) : Math.atan2(-0.3, -1);
+    ctx.save();
+    ctx.translate(pos.x, pos.y);
+    ctx.rotate(angle);
+    ctx.fillStyle = '#222';
+    ctx.fillText('🚀', 0, 0);
+    ctx.restore();
+  });
+
+
+  ctx.restore();
+}
+
+
+// --------- hỗ trợ ----------
+function resetPositions() {
+  tankH = canvas.height * 0.3;
+  tankVNPosX    = -tankH * 2;
+  tankEnemyPosX = canvas.width + tankH * 2;
+  collided = false;
+  collisionFrame = 0;
+  showQuestion = false;
+  questionAlpha = 0;
+  particles = [];
+  rockets = [];
+  for (let i = 0; i < 5; i++) spawnRocket();
+}
+
+
+function spawnWarEffects(cx, cy) {
+  particles = [];
+  for (let i = 0; i < 40; i++) {
+    particles.push({
+      x: cx,
+      y: cy,
+      vx: (Math.random() - 0.5) * 4,
+      vy: (Math.random() - 0.5) * 4,
+      size: 3 + Math.random() * 5,
+      life: 60 + Math.random() * 40,
+      type: Math.random() < 0.5 ? 'smoke' : 'spark'
+    });
+  }
+}
+
+
+function updateParticles() {
+  particles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.02;
+    p.life--;
+  });
+  particles = particles.filter(p => p.life > 0);
+}
+
+
+function drawParticles() {
+  particles.forEach(p => {
+    if (p.type === 'smoke') {
+      ctx.fillStyle = 'rgba(200,200,200,0.7)';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = 'rgba(255,215,0,0.9)';
+      ctx.fillRect(p.x, p.y, p.size, p.size);
+    }
+  });
+}
+
+
+function drawDust(x, y, scale) {
+  ctx.fillStyle = 'rgba(139,69,19,0.4)';
+  for (let i = 0; i < 7; i++) {
+    const dx = Math.random() * 50 * scale;
+    const dy = Math.random() * 5 * scale;
+    ctx.beginPath();
+    ctx.ellipse(x - dx, y + dy, 6 * scale, 3 * scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+
+function drawTank(img, x, y, shake) {
+  const scale = tankH / 55;
+  const w = 90 * scale;
+  const h = tankH;
+
+
+  if (shake) {
+    const sx = (Math.random() * 10) - 5;
+    const sy = (Math.random() * 10) - 5;
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.drawImage(img, x, y, w, h);
+    ctx.restore();
+  } else {
+    ctx.drawImage(img, x, y, w, h);
+  }
+  return { w, h };
+}
+
+
+function drawTankVN(x, y, shake) {
+  const scale = tankH / 55;
+  const w = 90 * scale;
+  drawDust(x + w * 0.2, y + tankH * 0.95, scale);
+  return drawTank(tankVN, x, y, shake);
+}
+
+
+function drawQuestionMark(cx, cy) {
+  if (!showQuestion) return;
+  if (questionAlpha < 1) questionAlpha += 0.03;
+
+
+  ctx.save();
+  ctx.globalAlpha = questionAlpha;
+  ctx.fillStyle = '#ffeb3b';
+  ctx.strokeStyle = '#ff9800';
+  ctx.lineWidth = 6;
+
+
+  const size = canvas.height * 0.15;
+  ctx.font = `bold ${size}px Arial`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, size * 0.7, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.fill();
+
+
+  ctx.fillStyle = '#ffeb3b';
+  ctx.fillText('?', cx, cy);
+  ctx.strokeText('?', cx, cy);
+
+
+  ctx.restore();
+}
+
+
+// --------- ANIMATION ---------
+function startAnimation() {
+  resetPositions();
+  
+  const tankY = () => canvas.height * 0.35;
+
+
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+
+
+    updateRockets();
+    drawRockets();
+
+
+    const y = tankY();
+    const scale = tankH / 55;
+    const tankW = 90 * scale;
+
+
+    if (!collided) {
+      const distanceToMeet = canvas.width + tankW * 4;
+      const step = distanceToMeet / framesToCollide;
+
+
+      tankVNPosX    += step / 2;
+      tankEnemyPosX -= step / 2;
+
+
+      const vn = drawTankVN(tankVNPosX, y, false);
+      drawTank(tankEnemy, tankEnemyPosX, y, false);
+
+
+      if (tankVNPosX + vn.w >= tankEnemyPosX) {
+        collided = true;
+        const cx = (tankVNPosX + tankEnemyPosX) / 2;
+        const cy = y - tankH * 0.2;
+        spawnWarEffects(cx, cy);
+        showQuestion = true;
+        fadeOutSound(500);
+        console.log('💥 Va chạm! Tắt âm thanh');
+      }
+    } else {
+      const shaking = collisionFrame < 15;
+      drawTankVN(tankVNPosX, y, shaking);
+      drawTank(tankEnemy, tankEnemyPosX, y, shaking);
+
+
+      updateParticles();
+      drawParticles();
+
+
+      const cx = (tankVNPosX + tankEnemyPosX) / 2;
+      const cy = y - tankH * 0.8;
+      drawQuestionMark(cx, cy);
+
+
+      collisionFrame++;
+    }
+
+
+    requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => {
+    resizeCanvas();
+    window.scrollTo(0, 0);
+  }, 100);
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && tankSound) {
+    tankSound.pause();
+  }
+});
+
+if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+  unmuteBtn.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    unmuteBtn.style.transform = 'scale(0.9)';
+  });
+  
+  unmuteBtn.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    unmuteBtn.style.transform = 'scale(1)';
+    unmute();
+  });
+  
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', (e) => {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) {
+      e.preventDefault();
+    }
+    lastTouchEnd = now;
+  }, false);
+}
+</script>
+</body>
+</html>

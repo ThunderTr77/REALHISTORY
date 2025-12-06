@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Thất Bại</title>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  
+  <style>
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body, html {
+      overflow: hidden;
+      background: #000;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      height: 100vh;
+      position: fixed;
+      width: 100%;
+    }
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+    
+    @media (max-width: 768px) {
+      body, html {
+        height: 100dvh;
+      }
+      canvas {
+        height: 100dvh;
+      }
+    }
+  </style>
+</head>
+<body>
+
+
+<!-- ========== AUDIO TAG AUTOPLAY ========== -->
+<audio id="bgAudio" autoplay loop muted preload="auto">
+  <source src="../sound/fire.mp3" type="audio/mpeg">
+</audio>
+
+
+<canvas id="canvas"></canvas>
+
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+
+// ========== AUDIO SETUP ==========
+const bgAudio = document.getElementById('bgAudio');
+
+
+// Unmute ngay khi load
+window.addEventListener('load', () => {
+  bgAudio.muted = false;
+  bgAudio.pause(); // Dừng background loop
+});
+
+
+// Tạo audio objects riêng cho fire và hit
+const fireSound = new Audio('../sound/fire.mp3');
+const hitSound = new Audio('../sound/hit.wav');
+
+
+fireSound.volume = 0.8;
+hitSound.volume = 0.9;
+
+
+function playFireSound() {
+  fireSound.currentTime = 0;
+  fireSound.play().then(() => {
+    console.log('✅ 🔫 Fire sound đã phát!');
+  }).catch(err => {
+    console.log('❌ Lỗi fire sound:', err);
+  });
+}
+
+
+function playHitSound() {
+  hitSound.currentTime = 0;
+  hitSound.play().then(() => {
+    console.log('✅ 💥 Hit sound đã phát!');
+  }).catch(err => {
+    console.log('❌ Lỗi hit sound:', err);
+  });
+}
+// =================================
+
+
+function resizeCanvas() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+
+const bgImage   = new Image();
+const tankVN    = new Image();
+const tankEnemy = new Image();
+
+
+bgImage.src   = '../image/bg.jpg';
+tankVN.src    = '../image/tank1.png';
+tankEnemy.src = '../image/tank2.png';
+
+
+let loaded = 0;
+function onLoaded() {
+  loaded++;
+  if (loaded === 3) {
+    startAnimation();
+  }
+}
+bgImage.onload   = onLoaded;
+tankVN.onload    = onLoaded;
+tankEnemy.onload = onLoaded;
+
+
+// ============ DURATION============
+const BULLET_DURATION = 3000;
+const EXPLOSION_DURATION = 3000;
+const MUZZLE_DELAY = 200;
+const BULLET_DELAY = 120;
+// ===================================
+
+
+let phase = 'prepare';
+let phaseStartTime = 0;
+let tankH;
+let tankVNPosX;
+let tankEnemyPosX;
+let tankY;
+
+
+// Muzzle flash
+let muzzleFlash = { active: false, x: 0, y: 0, frame: 0, maxFrame: 10 };
+
+
+// Bullet
+let bullet = null;
+
+
+// Explosion
+let combinedParticles = [];
+let tankFireParticles = [];
+
+
+// Defeat text
+let defeatText = {
+  active: false,
+  alpha: 1,
+  titleY: 0,
+  titleX: 0,
+  failY: 0,
+  failX: 0,
+  failTargetAngle: 0.4,
+  failCurrentAngle: 0,
+  failSpeed: 0,
+  failGravity: 0.015,
+  isHit: false, 
+  shakeFrame: 0,
+  maxShake: 20
+};
+
+
+// Rocket background
+const rocketFont = "300 32px 'Font Awesome 6 Free'";
+let rockets = [];
+
+
+// --------- ROCKET ----------
+function spawnRocket() {
+  const fromLeft = Math.random() < 0.5;
+  const margin = canvas.width * 0.1;
+  const startX = fromLeft ? -margin : canvas.width + margin;
+  const endX   = fromLeft ? canvas.width + margin : -margin;
+
+
+  rockets.push({
+    fromLeft, startX, endX,
+    yBase: canvas.height * (0.15 + Math.random() * 0.2),
+    height: canvas.height * (0.08 + Math.random() * 0.08),
+    t: 0,
+    speed: 0.002 + Math.random() * 0.003
+  });
+}
+
+
+function getBallisticPos(startX, endX, baseY, height, t) {
+  const x = startX + (endX - startX) * t;
+  const parabola = 4 * t * (1 - t);
+  const y = baseY - height * parabola;
+  return { x, y };
+}
+
+
+function updateRockets() {
+  rockets.forEach(r => { r.t += r.speed; });
+  rockets = rockets.filter(r => {
+    if (r.t > 1.1) { spawnRocket(); return false; }
+    return true;
+  });
+  while (rockets.length < 5) spawnRocket();
+}
+
+
+function drawRockets() {
+  ctx.save();
+  ctx.font = rocketFont;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  rockets.forEach(r => {
+    const pos = getBallisticPos(r.startX, r.endX, r.yBase, r.height, r.t);
+    const angle = r.fromLeft ? Math.atan2(0.3, 1) : Math.atan2(-0.3, -1);
+    ctx.save();
+    ctx.translate(pos.x, pos.y);
+    ctx.rotate(angle);
+    ctx.fillStyle = '#555';
+    ctx.fillText('🚀', 0, 0);
+    ctx.restore();
+  });
+  ctx.restore();
+}
+
+
+// --------- MUZZLE FLASH ----------
+function startMuzzleFlash(x, y) {
+  muzzleFlash.active = true;
+  muzzleFlash.x = x;
+  muzzleFlash.y = y;
+  muzzleFlash.frame = 0;
+  
+  playFireSound();
+}
+
+
+function updateMuzzleFlash() {
+  if (muzzleFlash.active) {
+    muzzleFlash.frame++;
+    if (muzzleFlash.frame >= muzzleFlash.maxFrame) {
+      muzzleFlash.active = false;
+    }
+  }
+}
+
+
+function drawMuzzleFlash() {
+  if (!muzzleFlash.active) return;
+  const { x, y, frame, maxFrame } = muzzleFlash;
+  const progress = frame / maxFrame;
+  const alpha = 1 - progress;
+  const size = 50 + (1 - progress) * 40;
+  
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  const gradient = ctx.createRadialGradient(x, y, 0, x, y, size);
+  gradient.addColorStop(0, '#fff');
+  gradient.addColorStop(0.3, '#ffff00');
+  gradient.addColorStop(0.6, '#ff8800');
+  gradient.addColorStop(1, 'rgba(255,0,0,0)');
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(x, y, size, 0, Math.PI * 2);
+  ctx.fill();
+  
+  for (let i = 0; i < 10; i++) {
+    const angle = (Math.PI * 2 * i) / 10 + progress * 0.3;
+    const length = size * (0.6 + Math.random() * 0.4);
+    const endX = x + Math.cos(angle) * length;
+    const endY = y + Math.sin(angle) * length;
+    ctx.strokeStyle = `rgba(255, 200, 0, ${alpha})`;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+
+// --------- BULLET ----------
+function createBullet(startX, startY, targetX, targetY, duration) {
+  return {
+    startX, startY, x: startX, y: startY,
+    targetX, targetY,
+    startTime: Date.now(),
+    duration, active: true,
+    trail: [], rotation: 0
+  };
+}
+
+
+function updateBullet() {
+  if (!bullet || !bullet.active) return;
+  
+  const elapsed = Date.now() - bullet.startTime;
+  const progress = Math.min(elapsed / bullet.duration, 1);
+  
+  bullet.x = bullet.startX + (bullet.targetX - bullet.startX) * progress;
+  bullet.y = bullet.startY + (bullet.targetY - bullet.startY) * progress;
+  bullet.rotation -= 0.3;
+  
+  bullet.trail.push({ x: bullet.x, y: bullet.y, alpha: 1 });
+  if (bullet.trail.length > 20) bullet.trail.shift();
+  bullet.trail.forEach((t, i) => { t.alpha = (i + 1) / bullet.trail.length; });
+  
+  if (defeatText.active && !defeatText.isHit && progress > 0.3) {
+    const textCenterX = canvas.width / 2;
+    const textCenterY = defeatText.failY;
+    const distance = Math.sqrt(Math.pow(bullet.x - textCenterX, 2) + Math.pow(bullet.y - textCenterY, 2));
+    
+    if (distance < 150) {
+      defeatText.isHit = true;
+      defeatText.shakeFrame = 0;
+    }
+  }
+  
+  if (progress >= 1) bullet.active = false;
+}
+
+
+function drawBullet() {
+  if (!bullet || !bullet.active) return;
+  ctx.save();
+  
+  bullet.trail.forEach((point) => {
+    const size = 8 * point.alpha;
+    ctx.fillStyle = `rgba(255, 200, 50, ${point.alpha * 0.6})`;
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  
+  ctx.translate(bullet.x, bullet.y);
+
+
+  const outerGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, 25);
+  outerGlow.addColorStop(0, 'rgba(255, 255, 100, 0.8)');
+  outerGlow.addColorStop(0.5, 'rgba(255, 150, 0, 0.5)');
+  outerGlow.addColorStop(1, 'rgba(255, 100, 0, 0)');
+  ctx.fillStyle = outerGlow;
+  ctx.beginPath();
+  ctx.arc(0, 0, 25, 0, Math.PI * 2);
+  ctx.fill();
+  
+  const coreGradient = ctx.createRadialGradient(-3, -3, 0, 0, 0, 15);
+  coreGradient.addColorStop(0, '#ffffff');
+  coreGradient.addColorStop(0.3, '#ffff00');
+  coreGradient.addColorStop(0.7, '#ff8800');
+  coreGradient.addColorStop(1, '#ff3300');
+  ctx.fillStyle = coreGradient;
+  ctx.beginPath();
+  ctx.arc(0, 0, 15, 0, Math.PI * 2);
+  ctx.fill();
+
+
+  ctx.rotate(bullet.rotation);
+  ctx.strokeStyle = '#ffcc00';
+  ctx.lineWidth = 3;
+  for (let i = 0; i < 4; i++) {
+    const angle = (Math.PI / 2) * i;
+    ctx.beginPath();
+    ctx.arc(0, 0, 18, angle, angle + Math.PI / 4);
+    ctx.stroke();
+  }
+  
+  ctx.restore();
+}
+
+
+// --------- TANK FIRE ----------
+function spawnTankFire(cx, cy) {
+  tankFireParticles = [];
+  for (let i = 0; i < 30; i++) {
+    tankFireParticles.push({
+      offsetX: (Math.random() - 0.5) * 100,
+      offsetY: (Math.random() - 0.5) * 60,
+      size: 10 + Math.random() * 20,
+      life: 40 + Math.random() * 40,
+      maxLife: 40 + Math.random() * 40,
+      vy: -0.5 - Math.random() * 1.5
+    });
+  }
+}
+
+
+function updateTankFire(cx, cy) {
+  tankFireParticles.forEach(p => {
+    p.offsetY += p.vy;
+    p.life--;
+  });
+  tankFireParticles = tankFireParticles.filter(p => p.life > 0);
+  
+  if (Math.random() < 0.3) {
+    tankFireParticles.push({
+      offsetX: (Math.random() - 0.5) * 100,
+      offsetY: (Math.random() - 0.5) * 30,
+      size: 10 + Math.random() * 20,
+      life: 40 + Math.random() * 40,
+      maxLife: 40 + Math.random() * 40,
+      vy: -0.5 - Math.random() * 1.5
+    });
+  }
+}
+
+
+function drawTankFire(cx, cy) {
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  tankFireParticles.forEach(p => {
+    const alpha = p.life / p.maxLife;
+    const x = cx + p.offsetX;
+    const y = cy + p.offsetY;
+    const gradient = ctx.createRadialGradient(x, y, 0, x, y, p.size);
+    gradient.addColorStop(0, `rgba(255, 255, 100, ${alpha})`);
+    gradient.addColorStop(0.4, `rgba(255, 150, 0, ${alpha * 0.8})`);
+    gradient.addColorStop(1, `rgba(255, 0, 0, 0)`);
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(x, y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.restore();
+}
+
+
+// --------- EXPLOSION ----------
+function startCombinedExplosion(cx, cy, duration) {
+  playHitSound();
+  
+  combinedParticles = [];
+  const frames = (duration / 1000) * 60;
+  
+  for (let i = 0; i < 200; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const rand = Math.random();
+    let type, speed;
+    
+    if (rand < 0.5) {
+      type = 'fire';
+      speed = 2 + Math.random() * 5;
+    } else if (rand < 0.75) {
+      type = 'spark';
+      speed = 3 + Math.random() * 6;
+    } else {
+      type = 'smoke';
+      speed = 0.5 + Math.random() * 2;
+      angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.8;
+    }
+    
+    combinedParticles.push({
+      x: cx + (Math.random() - 0.5) * 30,
+      y: cy + (Math.random() - 0.5) * 30,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      size: type === 'smoke' ? 25 + Math.random() * 50 : 12 + Math.random() * 30,
+      life: frames, maxLife: frames,
+      type, expansion: type === 'smoke' ? 0.5 + Math.random() * 0.8 : 0
+    });
+  }
+  spawnTankFire(cx, cy);
+}
+
+
+function updateCombinedExplosion() {
+  combinedParticles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    if (p.type === 'smoke') {
+      p.vy -= 0.03;
+      p.vx *= 0.98;
+      p.size += p.expansion;
+    } else {
+      p.vy += 0.12;
+      p.vx *= 0.98;
+    }
+    p.life--;
+  });
+  combinedParticles = combinedParticles.filter(p => p.life > 0);
+}
+
+
+function drawCombinedExplosion() {
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  combinedParticles.forEach(p => {
+    const alpha = p.life / p.maxLife;
+    if (p.type === 'fire') {
+      const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+      gradient.addColorStop(0, `rgba(255, 255, 200, ${alpha})`);
+      gradient.addColorStop(0.3, `rgba(255, 200, 0, ${alpha * 0.9})`);
+      gradient.addColorStop(0.6, `rgba(255, 100, 0, ${alpha * 0.7})`);
+      gradient.addColorStop(1, `rgba(255, 0, 0, 0)`);
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (p.type === 'spark') {
+      ctx.fillStyle = `rgba(255, 255, 150, ${alpha})`;
+      ctx.shadowColor = '#ffff00';
+      ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    } else if (p.type === 'smoke') {
+      const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+      gradient.addColorStop(0, `rgba(40, 40, 40, ${alpha * 0.8})`);
+      gradient.addColorStop(0.5, `rgba(70, 70, 70, ${alpha * 0.5})`);
+      gradient.addColorStop(1, `rgba(100, 100, 100, 0)`);
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.restore();
+}
+
+
+// --------- DEFEAT TEXT ----------
+function updateDefeatText() {
+  if (!defeatText.active) return;
+  
+  if (defeatText.isHit) {
+    defeatText.shakeFrame++;
+    
+    if (defeatText.shakeFrame > defeatText.maxShake) {
+      defeatText.failSpeed += defeatText.failGravity;
+      defeatText.failCurrentAngle += defeatText.failSpeed;
+  
+      if (defeatText.failCurrentAngle > defeatText.failTargetAngle) {
+        defeatText.failCurrentAngle = defeatText.failTargetAngle;
+        defeatText.failSpeed *= -0.3; 
+      }
+    }
+  }
+}
+
+
+function drawDefeatText() {
+  if (!defeatText.active) return;
+  
+  ctx.save();
+  
+  const centerX = canvas.width / 2;
+  defeatText.titleX = centerX;
+  defeatText.titleY = canvas.height * 0.25;
+  defeatText.failX = centerX;
+  defeatText.failY = canvas.height * 0.35;
+  
+  let shakeX = 0, shakeY = 0;
+  if (defeatText.isHit && defeatText.shakeFrame <= defeatText.maxShake) {
+    shakeX = (Math.random() - 0.5) * 15;
+    shakeY = (Math.random() - 0.5) * 15;
+  }
+  
+  ctx.shadowColor = '#f00';
+  ctx.shadowBlur = 30;
+  
+  ctx.font = 'bold 70px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  
+  ctx.strokeStyle = '#8B0000';
+  ctx.lineWidth = 6;
+  ctx.strokeText('CHIẾN DỊCH', defeatText.titleX, defeatText.titleY);
+  
+  const titleGradient = ctx.createLinearGradient(0, defeatText.titleY - 35, 0, defeatText.titleY + 35);
+  titleGradient.addColorStop(0, '#ff0000');
+  titleGradient.addColorStop(0.5, '#cc0000');
+  titleGradient.addColorStop(1, '#990000');
+  ctx.fillStyle = titleGradient;
+  ctx.fillText('CHIẾN DỊCH', defeatText.titleX, defeatText.titleY);
+  
+  ctx.save();
+
+
+  const pivotX = defeatText.failX - 180; 
+  const pivotY = defeatText.failY - 40; 
+  
+  ctx.translate(pivotX + shakeX, pivotY + shakeY);
+  ctx.rotate(defeatText.failCurrentAngle);
+  
+  ctx.shadowColor = '#f00';
+  ctx.shadowBlur = 40;
+  ctx.font = 'bold 80px Arial';
+  
+  ctx.strokeStyle = '#8B0000';
+  ctx.lineWidth = 8;
+  ctx.strokeText('THẤT BẠI', 180, 40); 
+  
+  const swingGradient = ctx.createLinearGradient(0, 0, 0, 80);
+  swingGradient.addColorStop(0, '#ff0000');
+  swingGradient.addColorStop(0.5, '#ff3300');
+  swingGradient.addColorStop(1, '#ff0000');
+  ctx.fillStyle = swingGradient;
+  ctx.fillText('THẤT BẠI', 180, 40);
+  
+  ctx.font = '50px "Font Awesome 6 Free"';
+  ctx.fillStyle = '#cc0000';
+  ctx.fillText('\uf714', -20, 40);
+  ctx.fillText('\uf714', 380, 40);
+  
+  ctx.fillStyle = '#666';
+  ctx.beginPath();
+  ctx.arc(0, 0, 8, 0, Math.PI * 2);
+  ctx.fill();
+  
+  ctx.restore();
+  
+  if (defeatText.isHit) {
+    const nailX = defeatText.failX + 180;
+    const nailY = defeatText.failY - 40;
+    
+    if (defeatText.shakeFrame <= defeatText.maxShake) {
+      ctx.fillStyle = 'rgba(255, 200, 0, 0.6)';
+      for (let i = 0; i < 5; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const len = 20 + Math.random() * 20;
+        ctx.beginPath();
+        ctx.moveTo(nailX, nailY);
+        ctx.lineTo(nailX + Math.cos(angle) * len, nailY + Math.sin(angle) * len);
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+  }
+  
+  ctx.restore();
+}
+
+
+// --------- TANK DRAWING ----------
+function drawTank(img, x, y) {
+  const scale = tankH / 55;
+  const w = 90 * scale;
+  const h = tankH;
+  ctx.drawImage(img, x, y, w, h);
+  return { w, h };
+}
+
+
+// --------- MAIN ANIMATION ----------
+function startAnimation() {
+  tankH = canvas.height * 0.25;
+  tankY = canvas.height * 0.65;
+  
+  const scale = tankH / 55;
+  const tankW = 90 * scale;
+  const gap = canvas.width * 0.35;
+  
+  tankVNPosX = canvas.width * 0.15;
+  tankEnemyPosX = tankVNPosX + tankW + gap;
+  
+  for (let i = 0; i < 5; i++) spawnRocket();
+  
+  // TIMELINE
+  setTimeout(() => {
+    phase = 'muzzle_flash';
+    const muzzleX = tankEnemyPosX;
+    const muzzleY = tankY + tankH * 0.4;
+    startMuzzleFlash(muzzleX, muzzleY);
+  }, MUZZLE_DELAY);
+  
+  setTimeout(() => {
+    phase = 'shooting';
+    defeatText.active = true;
+    const muzzleX = tankEnemyPosX;
+    const muzzleY = tankY + tankH * 0.4;
+    const targetX = tankVNPosX + (90 * scale) / 2;
+    const targetY = tankY + tankH / 2;
+    bullet = createBullet(muzzleX, muzzleY, targetX, targetY, BULLET_DURATION);
+  }, MUZZLE_DELAY + BULLET_DELAY);
+  
+  setTimeout(() => {
+    phase = 'exploding';
+    phaseStartTime = Date.now();
+    const vnW = 90 * scale;
+    startCombinedExplosion(tankVNPosX + vnW / 2, tankY + tankH / 2, EXPLOSION_DURATION);
+  }, MUZZLE_DELAY + BULLET_DELAY + BULLET_DURATION);
+  
+  setTimeout(() => {
+    phase = 'defeat';
+  }, MUZZLE_DELAY + BULLET_DELAY + BULLET_DURATION + EXPLOSION_DURATION);
+
+
+  function loop() {
+    if (phase === 'ended') return;
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+    
+    updateRockets();
+    drawRockets();
+    
+    drawTank(tankEnemy, tankEnemyPosX, tankY);
+    
+    if (phase === 'prepare' || phase === 'muzzle_flash' || phase === 'shooting') {
+      drawTank(tankVN, tankVNPosX, tankY);
+    }
+    
+    if (phase === 'muzzle_flash' || phase === 'shooting') {
+      updateMuzzleFlash();
+      drawMuzzleFlash();
+    }
+    
+    if (phase === 'shooting') {
+      updateBullet();
+      drawBullet();
+    }
+    
+    if (phase === 'exploding') {
+      const elapsed = Date.now() - phaseStartTime;
+      const progress = elapsed / EXPLOSION_DURATION;
+      
+      const scale = tankH / 55;
+      const vnW = 90 * scale;
+      const vnCenterX = tankVNPosX + vnW / 2;
+      const vnCenterY = tankY + tankH / 2;
+      
+      let shakeX = 0, shakeY = 0;
+      if (elapsed < 1000) {
+        shakeX = (Math.random() - 0.5) * 10;
+        shakeY = (Math.random() - 0.5) * 10;
+      }
+      
+      const fadeAlpha = Math.max(0, 1 - progress * 0.7);
+      ctx.save();
+      ctx.globalAlpha = fadeAlpha;
+      drawTank(tankVN, tankVNPosX + shakeX, tankY + shakeY);
+      ctx.restore();
+      
+      updateTankFire(vnCenterX, vnCenterY);
+      drawTankFire(vnCenterX, vnCenterY);
+      
+      updateCombinedExplosion();
+      drawCombinedExplosion();
+    }
+    
+    if (phase === 'shooting' || phase === 'exploding' || phase === 'defeat') {
+      updateDefeatText();
+      drawDefeatText();
+    }
+    
+    requestAnimationFrame(loop);
+  }
+  
+  loop();
+}
+
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => {
+    resizeCanvas();
+    window.scrollTo(0, 0);
+  }, 100);
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (fireSound) fireSound.pause();
+    if (hitSound) hitSound.pause();
+  }
+});
+
+if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', (e) => {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) {
+      e.preventDefault();
+    }
+    lastTouchEnd = now;
+  }, false);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Màn 4 - Tổng Công Kích Sài Gòn</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="../css/man4.css">
+</head>
+<body>
+
+<!-- ========== THEORY PHASE ========== -->
+<div class="theory-container" id="theoryPhase">
+  <div class="theory-bg"></div>
+  <div class="theory-stars" id="stars"></div>
+  <div class="theory-box">
+    <div class="theory-icon">💥</div>
+    <div class="theory-title">Tổng Công Kích Sài Gòn 1975</div>
+    <div class="theory-text">
+      <span id="theoryText"></span><span class="theory-cursor"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ========== LOAD IFRAME ========== -->
+<div class="iframe-container" id="loadPhase">
+  <iframe id="loadIframe" src=""></iframe>
+</div>
+
+<!-- ========== WIN IFRAME ========== -->
+<div class="iframe-container" id="winPhase">
+  <iframe id="winIframe" src=""></iframe>
+</div>
+
+<!-- ========== LOSS IFRAME ========== -->
+<div class="iframe-container" id="lossPhase">
+  <iframe id="lossIframe" src=""></iframe>
+</div>
+
+<!-- ========== QUESTION PHASE ========== -->
+<div class="question-container" id="questionPhase">
+  <div class="question-bg"></div>
+  <div class="question-box">
+    <div class="corner-decor corner-tl">⚔️</div>
+    <div class="corner-decor corner-tr">🎖️</div>
+    <div class="corner-decor corner-bl">📜</div>
+    <div class="corner-decor corner-br">🏛️</div>
+    
+    <div class="question-content">
+      <div class="question-left">
+        <div class="question-header">
+          <div class="question-badge">
+            <i class="fas fa-scroll"></i> CÂU HỎI LỊCH SỬ
+          </div>
+          <div class="question-number" id="questionNumber"></div>
+        </div>
+        
+        <div class="timer-box">
+          <div class="timer-label">⏰ THỜI GIAN</div>
+          <div class="timer" id="timer">30</div>
+        </div>
+        
+        <div class="question-text" id="questionText"></div>
+      </div>
+      
+      <div class="question-right">
+        <div class="answers" id="answers"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/man4.js"></script>
+</body>
+</html>
