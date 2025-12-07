@@ -23,41 +23,40 @@
     <div class="levels-grid">
       <!-- Màn 1 -->
       <div class="level-btn" onclick="startLevel(1)">
-        <div class="level-icon">⭐</div>
+        <div class="level-icon">🎯</div>
         <div class="level-number">1</div>
         <div class="level-label">Màn 1</div>
       </div>
       
       <!-- Màn 2 -->
-      <div class="level-btn" onclick="startLevel(2)">
-        <div class="level-icon">🏆</div>
+      <div class="level-btn locked" onclick="startLevel(2)">
+        <div class="level-icon">🔒</div>
         <div class="level-number">2</div>
         <div class="level-label">Màn 2</div>
       </div>
       
       <!-- Màn 3 -->
-      <div class="level-btn" onclick="startLevel(3)">
-        <div class="level-icon">🔥</div>
+      <div class="level-btn locked" onclick="startLevel(3)">
+        <div class="level-icon">🔒</div>
         <div class="level-number">3</div>
         <div class="level-label">Màn 3</div>
       </div>
       
       <!-- Màn 4 -->
-      <div class="level-btn" onclick="startLevel(4)">
-        <div class="level-icon">💥</div>
+      <div class="level-btn locked" onclick="startLevel(4)">
+        <div class="level-icon">🔒</div>
         <div class="level-number">4</div>
         <div class="level-label">Màn 4</div>
       </div>
       
       <!-- Màn 5 (Boss) -->
-      <div class="level-btn" onclick="startLevel(5)">
+      <div class="level-btn locked" onclick="startLevel(5)">
         <div class="level-icon">👑</div>
         <div class="level-number">5</div>
         <div class="level-label">Boss</div>
       </div>
     </div>
   </div>
-
 
   <script>
     // ==================== LOAD PROGRESS ====================
@@ -70,6 +69,19 @@
       
       levelBtns.forEach((btn, index) => {
         const level = index + 1;
+        
+        // Unlock levels up to currentUnlockedLevel
+        if (level <= currentUnlockedLevel) {
+          btn.classList.remove('locked');
+          const icon = btn.querySelector('.level-icon');
+          
+          // Set appropriate icon for unlocked levels
+          if (level === 1) icon.textContent = '⭐';
+          else if (level === 2) icon.textContent = '🏆';
+          else if (level === 3) icon.textContent = '🔥';
+          else if (level === 4) icon.textContent = '💥';
+          else if (level === 5) icon.textContent = '👑';
+        }
         
         // Mark completed levels
         if (completedLevels.includes(level)) {
@@ -97,6 +109,14 @@
     
     // ==================== START LEVEL ====================
     function startLevel(level) {
+      const levelBtn = document.querySelectorAll('.level-btn')[level - 1];
+      
+      // Check if locked
+      if (levelBtn.classList.contains('locked')) {
+        alert('🔒 Màn này chưa mở khóa!\nHãy hoàn thành màn trước đó để mở khóa.');
+        return;
+      }
+      
       // Redirect to level page
       window.location.href = `man${level}.html`;
     }
