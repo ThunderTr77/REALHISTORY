@@ -14,11 +14,12 @@
     
     body, html {
       height: 100vh;
+      width: 100vw;
       overflow: hidden;
       font-family: 'Arial', sans-serif;
     }
     
-  
+   
     .menu-bg {
       position: fixed;
       top: 0;
@@ -26,17 +27,13 @@
       width: 100%;
       height: 100%;
       z-index: 1;
-    }
-
-    .menu-bg img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center;
+      background-image: url('image/bgg.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
       filter: brightness(0.6);
     }
     
-   
     .overlay {
       position: fixed;
       top: 0;
@@ -47,19 +44,13 @@
       z-index: 2;
     }
     
-  
     .menu-container {
-      position: relative;
+      position: fixed;
       z-index: 3;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      padding-top: 75vh;
+      bottom: 15vh;
+      left: 50%;
+      transform: translateX(-50%);
     }
-    
-
 
     .battle-button {
       position: relative;
@@ -80,7 +71,6 @@
       letter-spacing: 6px;
       animation: fadeInUp 1.5s ease-out, pulse 2s infinite;
       overflow: hidden;
-      transform: translateY(-50%);
     }
     
     .battle-button::before {
@@ -102,7 +92,7 @@
     }
     
     .battle-button:hover {
-      transform: translateY(-50%) translateY(-8px) scale(1.05);
+      transform: translateY(-8px) scale(1.05);
       box-shadow: 
         0 15px 40px rgba(255, 107, 107, 0.8),
         0 0 80px rgba(255, 215, 0, 0.6),
@@ -111,7 +101,7 @@
     }
     
     .battle-button:active {
-      transform: translateY(-50%) translateY(-4px) scale(1.02);
+      transform: translateY(-4px) scale(1.02);
     }
     
     .battle-icon {
@@ -119,7 +109,6 @@
       animation: rotate 3s linear infinite;
     }
     
-   
     .particle {
       position: fixed;
       width: 4px;
@@ -131,8 +120,6 @@
       animation: float 4s infinite ease-in-out;
       box-shadow: 0 0 10px #ffd700;
     }
-    
-
 
     .corner-decor {
       position: fixed;
@@ -147,15 +134,14 @@
     .corner-bl { bottom: 20px; left: 20px; }
     .corner-br { bottom: 20px; right: 20px; }
     
-    /* Animations */
     @keyframes fadeInUp {
       from {
         opacity: 0;
-        transform: translateY(-50%) translateY(100px);
+        transform: translateY(50px);
       }
       to {
         opacity: 1;
-        transform: translateY(-50%);
+        transform: translateY(0);
       }
     }
     
@@ -180,53 +166,71 @@
         transform: translateY(0) translateX(0);
         opacity: 0;
       }
-      10% {
-        opacity: 1;
-      }
-      90% {
-        opacity: 1;
-      }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
       50% {
         transform: translateY(-80vh) translateX(20px);
       }
     }
     
-  
+    /* Tablet */
+    @media (max-width: 1024px) {
+      .battle-button { 
+        font-size: 36px; 
+        padding: 20px 60px;
+        letter-spacing: 5px;
+      }
+    }
+    
+    /* Mobile */
     @media (max-width: 768px) {
       .battle-button { 
-        font-size: 32px; 
-        padding: 20px 50px;
+        font-size: 28px; 
+        padding: 18px 45px;
         letter-spacing: 3px;
       }
       .corner-decor { font-size: 50px; }
     }
+    
+    /* Mobile Landscape */
+    @media (max-width: 926px) and (orientation: landscape) {
+      .battle-button { 
+        font-size: 24px; 
+        padding: 15px 40px;
+        letter-spacing: 2px;
+      }
+      .corner-decor { font-size: 35px; }
+      .menu-container { bottom: 20vh; }
+    }
+    
+    /* Small phone */
+    @media (max-width: 480px) {
+      .battle-button { 
+        font-size: 22px; 
+        padding: 14px 35px;
+      }
+      .corner-decor { font-size: 40px; }
+    }
   </style>
 </head>
 <body>
-  <!-- Background -->
-  <div class="menu-bg">
-    <img src="image/bgg.jpg" alt="Background">
-  </div>
+
+  <div class="menu-bg"></div>
   <div class="overlay"></div>
   
-  <!-- Decorative corners -->
-  <div class="corner-decor corner-tl"><i class="fas fa-shield-alt"></i></div>
+  <!-- <div class="corner-decor corner-tl"><i class="fas fa-shield-alt"></i></div>
   <div class="corner-decor corner-tr"><i class="fas fa-star"></i></div>
   <div class="corner-decor corner-bl"><i class="fas fa-crosshairs"></i></div>
-  <div class="corner-decor corner-br"><i class="fas fa-trophy"></i></div>
+  <div class="corner-decor corner-br"><i class="fas fa-trophy"></i></div> -->
   
-  <!-- Main container -->
   <div class="menu-container">
-  
     <button class="battle-button" onclick="startGame()">
       <i class="fas fa-fist-raised battle-icon"></i>
-      <span>CHIẾN ĐẤU</span>
+      <span>Bắt đầu</span>
     </button>
   </div>
 
-
   <script>
-   
     function createParticles() {
       for (let i = 0; i < 30; i++) {
         const particle = document.createElement('div');
@@ -240,26 +244,18 @@
     }
     
     createParticles();
-    
-
 
     function startGame() {
-   
       const button = document.querySelector('.battle-button');
-      button.style.transform = 'translateY(-50%) scale(0.95)';
+      button.style.transform = 'scale(0.95)';
       
       setTimeout(() => {
-    
         localStorage.setItem('currentQuestion', '0');
         localStorage.setItem('score', '0');
-        
-
-
         window.location.href = 'html/menu.html';
       }, 200);
     }
     
-  
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         startGame();

@@ -1,15 +1,31 @@
+const LOAD_DURATION = 2050;
+const WIN_DURATION = 2600;
+const LOSS_DURATION = 1600;
 
-// ==================== TIMING CONFIG ====================
-const LOAD_DURATION = 8500;
-const WIN_DURATION = 10000;
-const LOSS_DURATION = 6000;
-
-// ==================== AUDIO SETUP ====================
 const typeSound = new Audio('../sound/type.mp3');
 typeSound.loop = true;
 typeSound.volume = 0.6;
 
+let audioUnlocked = false;
+
+function unlockAudio() {
+  if (audioUnlocked) return;
+  
+  typeSound.play().then(() => {
+    typeSound.pause();
+    typeSound.currentTime = 0;
+  }).catch(() => {});
+  
+  audioUnlocked = true;
+  console.log('✅ Audio unlocked!');
+}
+
+document.addEventListener('click', unlockAudio, { once: true });
+document.addEventListener('touchstart', unlockAudio, { once: true });
+document.addEventListener('keydown', unlockAudio, { once: true });
+
 function playTypeSound() {
+  if (!audioUnlocked) unlockAudio();
   typeSound.currentTime = 0;
   typeSound.play().then(() => {
     console.log('✅ ⌨️ Type sound playing');
@@ -22,9 +38,7 @@ function stopTypeSound() {
   console.log('⏸️ Type sound stopped');
 }
 
-// ==================== DATA ====================
 const LEVEL = 4;
-
 const THEORY_TEXT = "Ngày 26/4/1975, quân ta bắt đầu tổng công kích từ 5 hướng. Không quân địch hoảng loạn, hệ thống phòng thủ bị tê liệt.";
 
 const QUESTIONS = [
@@ -36,15 +50,39 @@ const QUESTIONS = [
   {
     question: "Tướng Dương Văn Minh tuyên bố đầu hàng vào thời điểm nào?",
     answers: ["7h30 – 30/4", "8h30 – 30/4", "9h – 30/4", "11h – 30/4"],
-    correct: 1
+    correct: 3
   }
 ];
 
-// ==================== GAME STATE ====================
 let currentQuestionIndex = 0;
 let timerInterval;
 
-// ==================== PHASE CONTROL ====================
+const theoryBtn = document.getElementById('theoryBtn');
+const theoryPopup = document.getElementById('theoryPopup');
+
+if (theoryBtn) {
+  theoryBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    theoryPopup.classList.add('active');
+    console.log('📖 Theory popup opened');
+  });
+}
+
+if (theoryPopup) {
+  theoryPopup.addEventListener('click', (e) => {
+    if (e.target === theoryPopup) {
+      theoryPopup.classList.remove('active');
+      console.log('📖 Theory popup closed');
+    }
+  });
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && theoryPopup.classList.contains('active')) {
+    theoryPopup.classList.remove('active');
+  }
+});
+
 function showPhase(phase) {
   console.log('🎬 Showing phase:', phase);
   
@@ -111,7 +149,6 @@ function showPhase(phase) {
   }
 }
 
-// ==================== CREATE STARS ====================
 function createStars() {
   const starsContainer = document.getElementById('stars');
   starsContainer.innerHTML = '';
@@ -125,7 +162,6 @@ function createStars() {
   }
 }
 
-// ==================== THEORY TYPEWRITER ====================
 function startTheoryTypewriter() {
   let index = 0;
   const element = document.getElementById('theoryText');
@@ -139,7 +175,7 @@ function startTheoryTypewriter() {
       
       element.textContent += THEORY_TEXT.charAt(index);
       index++;
-      setTimeout(type, 50);
+      setTimeout(type, 30);
     } else {
       stopTypeSound();
       
@@ -152,7 +188,6 @@ function startTheoryTypewriter() {
   setTimeout(type, 500);
 }
 
-// ==================== QUESTION PHASE ====================
 function loadQuestion() {
   if (currentQuestionIndex >= QUESTIONS.length) {
     completeLevelAndUnlockNext();
@@ -182,7 +217,7 @@ function loadQuestion() {
 }
 
 function startTimer() {
-  let timeLeft = 30;
+  let timeLeft = 90;
   document.getElementById('timer').textContent = timeLeft;
   
   timerInterval = setInterval(() => {
@@ -200,19 +235,48 @@ function checkAnswer(selectedIndex) {
   clearInterval(timerInterval);
   
   const q = QUESTIONS[currentQuestionIndex];
+  const timeLeft = parseInt(document.getElementById('timer').textContent);
   
   console.log('Selected:', selectedIndex, 'Correct:', q.correct);
   
   if (selectedIndex === q.correct) {
-    console.log('✅ CORRECT! Showing win');
+    const earnedScore = Math.max(0, timeLeft);
+    
+    console.log(`✅ CORRECT! Time left: ${timeLeft}s, Earned: ${earnedScore} points`);
+    
+    saveScore(LEVEL, currentQuestionIndex + 1, earnedScore);
+    
     showPhase('win');
   } else {
-    console.log('❌ WRONG! Showing loss');
+    console.log('❌ WRONG! No points earned');
     showPhase('loss');
   }
 }
 
-// ==================== COMPLETE LEVEL ====================
+function saveScore(level, questionNumber, score) {
+  let totalScore = parseInt(localStorage.getItem('totalScore') || '0');
+  let levelScores = JSON.parse(localStorage.getItem('levelScores') || '{}');
+  
+  if (!levelScores[level]) {
+    levelScores[level] = {};
+  }
+  
+  const key = `q${questionNumber}`;
+  if (!levelScores[level][key] || score > levelScores[level][key]) {
+    const oldScore = levelScores[level][key] || 0;
+    totalScore = totalScore - oldScore + score;
+    
+    levelScores[level][key] = score;
+    
+    console.log(`💾 Saved: Level ${level}, Question ${questionNumber}, Score: ${score}`);
+  }
+  
+  localStorage.setItem('totalScore', totalScore.toString());
+  localStorage.setItem('levelScores', JSON.stringify(levelScores));
+  
+  console.log(`📊 Total Score: ${totalScore}`);
+}
+
 function completeLevelAndUnlockNext() {
   let completedLevels = JSON.parse(localStorage.getItem('completedLevels') || '[]');
   if (!completedLevels.includes(LEVEL)) {
@@ -230,13 +294,10 @@ function completeLevelAndUnlockNext() {
   }, 2000);
 }
 
-// ==================== CLEANUP ====================
 window.addEventListener('beforeunload', () => {
   stopTypeSound();
 });
 
-// ==================== START ====================
-showPhase('theory');
 window.addEventListener('orientationchange', () => {
   setTimeout(() => {
     window.scrollTo(0, 0);
@@ -259,3 +320,9 @@ if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
     lastTouchEnd = now;
   }, false);
 }
+
+window.addEventListener('scroll', () => {
+  window.scrollTo(0, 0);
+});
+
+showPhase('theory');

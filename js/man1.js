@@ -1,15 +1,33 @@
-
 // ==================== TIMING CONFIG ====================
-const LOAD_DURATION = 8500;
-const WIN_DURATION = 10000;
-const LOSS_DURATION = 6000;
+const LOAD_DURATION = 2050;
+const WIN_DURATION = 2600;
+const LOSS_DURATION = 1600;
 
 // ==================== AUDIO SETUP ====================
 const typeSound = new Audio('../sound/type.mp3');
 typeSound.loop = true;
 typeSound.volume = 0.6;
 
+let audioUnlocked = false;
+
+function unlockAudio() {
+  if (audioUnlocked) return;
+  
+  typeSound.play().then(() => {
+    typeSound.pause();
+    typeSound.currentTime = 0;
+  }).catch(() => {});
+  
+  audioUnlocked = true;
+  console.log('✅ Audio unlocked!');
+}
+
+document.addEventListener('click', unlockAudio, { once: true });
+document.addEventListener('touchstart', unlockAudio, { once: true });
+document.addEventListener('keydown', unlockAudio, { once: true });
+
 function playTypeSound() {
+  if (!audioUnlocked) unlockAudio();
   typeSound.currentTime = 0;
   typeSound.play().then(() => {
     console.log('✅ ⌨️ Type sound playing');
@@ -43,11 +61,38 @@ const QUESTIONS = [
 let currentQuestionIndex = 0;
 let timerInterval;
 
+// ==================== THEORY POPUP ====================
+const theoryBtn = document.getElementById('theoryBtn');
+const theoryPopup = document.getElementById('theoryPopup');
+
+if (theoryBtn) {
+  theoryBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    theoryPopup.classList.add('active');
+    console.log('📖 Theory popup opened');
+  });
+}
+
+if (theoryPopup) {
+  theoryPopup.addEventListener('click', (e) => {
+    if (e.target === theoryPopup) {
+      theoryPopup.classList.remove('active');
+      console.log('📖 Theory popup closed');
+    }
+  });
+}
+
+// Đóng popup khi nhấn ESC
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && theoryPopup.classList.contains('active')) {
+    theoryPopup.classList.remove('active');
+  }
+});
+
 // ==================== PHASE CONTROL ====================
 function showPhase(phase) {
   console.log('🎬 Showing phase:', phase);
   
-  // Dừng type sound khi chuyển phase
   stopTypeSound();
   
   document.getElementById('theoryPhase').style.display = 'none';
@@ -133,16 +178,14 @@ function startTheoryTypewriter() {
   
   function type() {
     if (index < THEORY_TEXT.length) {
-      // Bắt đầu phát âm thanh đánh máy
       if (index === 0) {
         playTypeSound();
       }
       
       element.textContent += THEORY_TEXT.charAt(index);
       index++;
-      setTimeout(type, 50);
+      setTimeout(type, 30);
     } else {
-      // Dừng âm thanh khi gõ xong
       stopTypeSound();
       
       setTimeout(() => {
@@ -184,7 +227,7 @@ function loadQuestion() {
 }
 
 function startTimer() {
-  let timeLeft = 30;
+  let timeLeft = 90; 
   document.getElementById('timer').textContent = timeLeft;
   
   timerInterval = setInterval(() => {
@@ -202,17 +245,53 @@ function checkAnswer(selectedIndex) {
   clearInterval(timerInterval);
   
   const q = QUESTIONS[currentQuestionIndex];
+  const currentTime = parseInt(document.getElementById('timer').textContent);
   
   console.log('Selected:', selectedIndex, 'Correct:', q.correct);
   
   if (selectedIndex === q.correct) {
-    console.log('✅ CORRECT! Showing win');
+  
+    const score = Math.max(0, 90 - (90 - currentTime)); 
+    const earnedScore = 90 - (90 - currentTime); 
+    
+    console.log(`✅ CORRECT! Time left: ${currentTime}s, Earned: ${earnedScore} points`);
+  
+    saveScore(LEVEL, currentQuestionIndex + 1, earnedScore);
+    
     showPhase('win');
   } else {
-    console.log('❌ WRONG! Showing loss');
+
+    console.log('❌ WRONG! No points earned');
     showPhase('loss');
   }
 }
+
+// ==================== LƯU ĐIỂM ====================
+function saveScore(level, questionNumber, score) {
+
+  let totalScore = parseInt(localStorage.getItem('totalScore') || '0');
+
+  let levelScores = JSON.parse(localStorage.getItem('levelScores') || '{}');
+
+  if (!levelScores[level]) {
+    levelScores[level] = {};
+  }
+  const key = `q${questionNumber}`;
+  if (!levelScores[level][key] || score > levelScores[level][key]) {
+
+    const oldScore = levelScores[level][key] || 0;
+    totalScore = totalScore - oldScore + score;
+    
+    levelScores[level][key] = score;
+    
+    console.log(`💾 Saved: Level ${level}, Question ${questionNumber}, Score: ${score}`);
+  }
+  localStorage.setItem('totalScore', totalScore.toString());
+  localStorage.setItem('levelScores', JSON.stringify(levelScores));
+  
+  console.log(`📊 Total Score: ${totalScore}`);
+}
+
 
 // ==================== COMPLETE LEVEL ====================
 function completeLevelAndUnlockNext() {
@@ -237,9 +316,6 @@ window.addEventListener('beforeunload', () => {
   stopTypeSound();
 });
 
-// ==================== START ====================
-showPhase('theory');
-/* ========== MOBILE SUPPORT ========== */
 window.addEventListener('orientationchange', () => {
   setTimeout(() => {
     window.scrollTo(0, 0);
@@ -262,3 +338,6 @@ if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
     lastTouchEnd = now;
   }, false);
 }
+
+// ==================== START ====================
+showPhase('theory');

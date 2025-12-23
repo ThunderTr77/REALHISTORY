@@ -2,10 +2,11 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>Loading </title>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Loading</title>
   
   <style>
     * { 
@@ -14,104 +15,182 @@
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
     }
-    body, html {
+    
+    html {
+      width: 100%;
+      height: 100%;
+    }
+    
+    body {
       overflow: hidden;
       background: #000;
       font-family: 'Segoe UI', Tahoma, sans-serif;
-      height: 100vh;
-      position: fixed;
       width: 100%;
-    }
-    canvas {
-      display: block;
-      width: 100vw;
-      height: 100vh;
+      height: 100%;
+      position: fixed;
+      touch-action: none;
+      overscroll-behavior: none;
     }
     
-    /* Nút unmute nếu cần */
+    canvas {
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      max-width: 100vw;
+      max-height: 100vh;
+      object-fit: contain;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+    }
+    
     #unmuteBtn {
       position: fixed;
-      bottom: 30px;
-      right: 30px;
+      bottom: 15px;
+      right: 15px;
       background: rgba(255, 215, 0, 0.95);
       color: #000;
       border: none;
-      padding: 15px 25px;
+      padding: 12px 20px;
       border-radius: 50px;
-      font-size: 24px;
+      font-size: 20px;
       cursor: pointer;
-      box-shadow: 0 5px 20px rgba(255, 215, 0, 0.5);
+      box-shadow: 0 4px 15px rgba(255, 215, 0, 0.5);
       z-index: 1000;
       display: none;
       animation: pulse 1.5s infinite;
       user-select: none;
-      min-width: 60px;
-      min-height: 60px;
+      min-width: 50px;
+      min-height: 50px;
+      touch-action: manipulation;
+      will-change: transform;
     }
     
     @keyframes pulse {
       0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
+      50% { transform: scale(1.05); }
     }
     
-    @media (max-width: 768px) {
+    /* Màn hình rất nhỏ - phones portrait */
+    @media (max-width: 425px) {
+      body {
+        height: 100dvh; /* Dynamic viewport height */
+      }
+      
+      canvas {
+        max-height: 100dvh;
+      }
+      
       #unmuteBtn {
-        bottom: 15px;
-        right: 15px;
-        padding: 12px 20px;
-        font-size: 20px;
+        bottom: 8px;
+        right: 8px;
+        padding: 8px 15px;
+        font-size: 18px;
+        min-width: 42px;
+        min-height: 42px;
+      }
+    }
+    
+    /* Extra small devices */
+    @media (max-width: 375px) {
+      #unmuteBtn {
+        bottom: 5px;
+        right: 5px;
+        padding: 6px 12px;
+        font-size: 16px;
+        min-width: 38px;
+        min-height: 38px;
+      }
+    }
+    
+    /* Landscape mode - màn hình ngang */
+    @media (max-height: 500px) and (orientation: landscape) {
+      body {
+        height: 100dvh;
+      }
+      
+      canvas {
+        max-height: 100dvh;
+      }
+      
+      #unmuteBtn {
+        bottom: 5px;
+        right: 5px;
+        padding: 6px 12px;
+        font-size: 16px;
+        min-width: 38px;
+        min-height: 38px;
       }
     }
   </style>
 </head>
 <body>
 
-
-
 <audio id="tankSound" autoplay loop preload="auto">
   <source src="../sound/xechay.mp3" type="audio/mpeg">
 </audio>
 
-
-
 <button id="unmuteBtn" onclick="unmute()">🔊</button>
-
 
 <canvas id="canvas"></canvas>
 
-
 <script>
 const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext('2d', { alpha: false });
 const tankSound = document.getElementById('tankSound');
 const unmuteBtn = document.getElementById('unmuteBtn');
 
 
-function resizeCanvas() {
-  canvas.width  = window.innerWidth;
-  canvas.height = window.innerHeight;
+function getActualVH() {
+  return window.innerHeight || document.documentElement.clientHeight;
 }
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
 
+function getActualVW() {
+  return window.innerWidth || document.documentElement.clientWidth;
+}
+
+
+function resizeCanvas() {
+  const vw = getActualVW();
+  const vh = getActualVH();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  
+ 
+  canvas.width = vw * dpr;
+  canvas.height = vh * dpr;
+  
+  ctx.scale(dpr, dpr);
+  
+  canvas.style.width = `${vw}px`;
+  canvas.style.height = `${vh}px`;
+}
+
+
+let resizeTimeout;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    resizeCanvas();
+    resetPositions();
+  }, 100);
+});
+
+resizeCanvas();
 
 // ========== AUDIO CONTROL ==========
 tankSound.volume = 0.7;
-
-
 
 tankSound.addEventListener('play', () => {
   console.log('✅ Âm thanh đang phát!');
   unmuteBtn.style.display = 'none';
 });
 
-
 tankSound.addEventListener('pause', () => {
   console.log('⚠️ Âm thanh bị pause!');
   unmuteBtn.style.display = 'block';
 });
-
-
 
 window.addEventListener('load', () => {
   tankSound.play().then(() => {
@@ -122,8 +201,6 @@ window.addEventListener('load', () => {
   });
 });
 
-
-
 function unmute() {
   tankSound.muted = false;
   tankSound.volume = 0.7;
@@ -131,13 +208,11 @@ function unmute() {
   unmuteBtn.style.display = 'none';
 }
 
-
 document.addEventListener('click', () => {
   if (tankSound.paused) {
     tankSound.play();
   }
 }, { once: true });
-
 
 function fadeOutSound(duration = 500) {
   const startVolume = tankSound.volume;
@@ -154,22 +229,17 @@ function fadeOutSound(duration = 500) {
   }, 50);
 }
 
-
 // =================================
 
-
-const bgImage   = new Image();
-const tankVN    = new Image();
+const bgImage = new Image();
+const tankVN = new Image();
 const tankEnemy = new Image();
 
-
-bgImage.src   = '../image/bg.jpg';
-tankVN.src    = '../image/tank1.png';
+bgImage.src = '../image/bg.jpg';
+tankVN.src = '../image/tank1.png';
 tankEnemy.src = '../image/tank2.png';
 
-
 let loaded = 0;
-
 
 function onLoaded() {
   loaded++;
@@ -177,12 +247,11 @@ function onLoaded() {
     startAnimation();
   }
 }
-bgImage.onload   = onLoaded;
-tankVN.onload    = onLoaded;
+bgImage.onload = onLoaded;
+tankVN.onload = onLoaded;
 tankEnemy.onload = onLoaded;
 
-
-// --------- trạng thái ----------
+// --------- Trạng thái ----------
 let tankH;
 let tankVNPosX;
 let tankEnemyPosX;
@@ -191,113 +260,124 @@ let collisionFrame = 0;
 let showQuestion = false;
 let questionAlpha = 0;
 
-
-const moveTime = 17;
+const moveTime =2;
 const fps = 60;
 const framesToCollide = moveTime * fps;
 
-
 let particles = [];
-let rockets = [];
+let planes = [];
 
+// --------- MÁY BAY ----------
+function getCanvasSize() {
+  return {
+    width: getActualVW(),
+    height: getActualVH()
+  };
+}
 
-// --------- ROCKET ----------
-const rocketFont = "300 32px 'Font Awesome 6 Free'";
-
-
-function spawnRocket() {
+function spawnPlane() {
+  const size = getCanvasSize();
   const fromLeft = Math.random() < 0.5;
-  const margin = canvas.width * 0.1;
-  const startX = fromLeft ? -margin : canvas.width + margin;
-  const endX   = fromLeft ? canvas.width + margin : -margin;
+  const margin = size.width * 0.05;
+  const startX = fromLeft ? -margin : size.width + margin;
+  const endX = fromLeft ? size.width + margin : -margin;
 
-
-  rockets.push({
+  planes.push({
     fromLeft,
     startX,
     endX,
-    yBase: canvas.height * (0.15 + Math.random() * 0.2),
-    height: canvas.height * (0.08 + Math.random() * 0.08),
+    y: size.height * (0.05 + Math.random() * 0.15),
+    waveAmplitude: size.height * (0.015 + Math.random() * 0.025),
+    waveFrequency: 2 + Math.random() * 2,
     t: 0,
-    speed: 0.002 + Math.random() * 0.003
+    speed: 0.003 + Math.random() * 0.004
   });
 }
 
-
-function getBallisticPos(startX, endX, baseY, height, t) {
+function getPlanePos(startX, endX, baseY, amplitude, frequency, t) {
   const x = startX + (endX - startX) * t;
-  const parabola = 4 * t * (1 - t);
-  const y = baseY - height * parabola;
+  const y = baseY + Math.sin(t * Math.PI * frequency) * amplitude;
   return { x, y };
 }
 
-
-function updateRockets() {
-  rockets.forEach(r => { r.t += r.speed; });
-  rockets = rockets.filter(r => {
-    if (r.t > 1.1) {
-      spawnRocket();
+function updatePlanes() {
+  planes.forEach(p => { p.t += p.speed; });
+  planes = planes.filter(p => {
+    if (p.t > 1.05) {
+      spawnPlane();
       return false;
     }
     return true;
   });
-  while (rockets.length < 5) spawnRocket();
+  while (planes.length < 4) spawnPlane();
 }
 
-
-function drawRockets() {
+function drawPlanes() {
+  const size = getCanvasSize();
+  const fontSize = Math.max(24, Math.min(size.width, size.height) * 0.06);
+  
   ctx.save();
-  ctx.font = rocketFont;
+  ctx.font = `300 ${fontSize}px Arial`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-
-  rockets.forEach(r => {
-    const pos = getBallisticPos(r.startX, r.endX, r.yBase, r.height, r.t);
-    const angle = r.fromLeft ? Math.atan2(0.3, 1) : Math.atan2(-0.3, -1);
+  planes.forEach(p => {
+    const pos = getPlanePos(p.startX, p.endX, p.y, p.waveAmplitude, p.waveFrequency, p.t);
+    
+    const derivative = Math.cos(p.t * Math.PI * p.waveFrequency) * p.waveAmplitude * p.waveFrequency * Math.PI;
+    const dx = p.endX - p.startX;
+    const angle = Math.atan2(derivative, dx);
+    
     ctx.save();
     ctx.translate(pos.x, pos.y);
     ctx.rotate(angle);
-    ctx.fillStyle = '#222';
-    ctx.fillText('🚀', 0, 0);
+    
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    
+    ctx.fillStyle = '#555';
+    ctx.fillText('✈️', 0, 0);
+    
     ctx.restore();
   });
-
 
   ctx.restore();
 }
 
-
-// --------- hỗ trợ ----------
+// --------- Hỗ trợ ----------
 function resetPositions() {
-  tankH = canvas.height * 0.3;
-  tankVNPosX    = -tankH * 2;
-  tankEnemyPosX = canvas.width + tankH * 2;
+  const size = getCanvasSize();
+  tankH = size.height * (size.width < 425 ? 0.22 : 0.25);
+  tankVNPosX = -tankH * 2;
+  tankEnemyPosX = size.width + tankH * 2;
   collided = false;
   collisionFrame = 0;
   showQuestion = false;
   questionAlpha = 0;
   particles = [];
-  rockets = [];
-  for (let i = 0; i < 5; i++) spawnRocket();
+  planes = [];
+  for (let i = 0; i < 4; i++) spawnPlane();
 }
-
 
 function spawnWarEffects(cx, cy) {
   particles = [];
-  for (let i = 0; i < 40; i++) {
+  const size = getCanvasSize();
+  const particleCount = Math.min(40, Math.floor(size.width / 15));
+  
+  for (let i = 0; i < particleCount; i++) {
     particles.push({
       x: cx,
       y: cy,
       vx: (Math.random() - 0.5) * 4,
       vy: (Math.random() - 0.5) * 4,
-      size: 3 + Math.random() * 5,
+      size: 2 + Math.random() * 4,
       life: 60 + Math.random() * 40,
       type: Math.random() < 0.5 ? 'smoke' : 'spark'
     });
   }
 }
-
 
 function updateParticles() {
   particles.forEach(p => {
@@ -308,7 +388,6 @@ function updateParticles() {
   });
   particles = particles.filter(p => p.life > 0);
 }
-
 
 function drawParticles() {
   particles.forEach(p => {
@@ -324,10 +403,10 @@ function drawParticles() {
   });
 }
 
-
 function drawDust(x, y, scale) {
   ctx.fillStyle = 'rgba(139,69,19,0.4)';
-  for (let i = 0; i < 7; i++) {
+  const dustCount = scale > 1 ? 7 : 5;
+  for (let i = 0; i < dustCount; i++) {
     const dx = Math.random() * 50 * scale;
     const dy = Math.random() * 5 * scale;
     ctx.beginPath();
@@ -336,16 +415,14 @@ function drawDust(x, y, scale) {
   }
 }
 
-
 function drawTank(img, x, y, shake) {
   const scale = tankH / 55;
   const w = 90 * scale;
   const h = tankH;
 
-
   if (shake) {
-    const sx = (Math.random() * 10) - 5;
-    const sy = (Math.random() * 10) - 5;
+    const sx = (Math.random() * 8) - 4;
+    const sy = (Math.random() * 8) - 4;
     ctx.save();
     ctx.translate(sx, sy);
     ctx.drawImage(img, x, y, w, h);
@@ -356,7 +433,6 @@ function drawTank(img, x, y, shake) {
   return { w, h };
 }
 
-
 function drawTankVN(x, y, shake) {
   const scale = tankH / 55;
   const w = 90 * scale;
@@ -364,73 +440,104 @@ function drawTankVN(x, y, shake) {
   return drawTank(tankVN, x, y, shake);
 }
 
-
 function drawQuestionMark(cx, cy) {
   if (!showQuestion) return;
-  if (questionAlpha < 1) questionAlpha += 0.03;
-
+  if (questionAlpha < 1) questionAlpha += 0.05;
 
   ctx.save();
   ctx.globalAlpha = questionAlpha;
-  ctx.fillStyle = '#ffeb3b';
-  ctx.strokeStyle = '#ff9800';
-  ctx.lineWidth = 6;
 
+  const size = getCanvasSize();
+  const markSize = Math.min(size.width, size.height) * (size.width < 425 ? 0.14 : 0.12);
+  const radius = markSize * 0.85;
 
-  const size = canvas.height * 0.15;
-  ctx.font = `bold ${size}px Arial`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-
-
+ 
+  const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius * 1.3);
+  gradient.addColorStop(0, 'rgba(255, 235, 59, 0.6)');
+  gradient.addColorStop(0.5, 'rgba(255, 152, 0, 0.3)');
+  gradient.addColorStop(1, 'rgba(255, 152, 0, 0)');
+  ctx.fillStyle = gradient;
   ctx.beginPath();
-  ctx.arc(cx, cy, size * 0.7, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.arc(cx, cy, radius * 1.3, 0, Math.PI * 2);
   ctx.fill();
 
 
-  ctx.fillStyle = '#ffeb3b';
-  ctx.fillText('?', cx, cy);
-  ctx.strokeText('?', cx, cy);
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+  ctx.shadowBlur = 15;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 6;
+  
+  const bgGradient = ctx.createRadialGradient(cx, cy - markSize * 0.2, 0, cx, cy, radius);
+  bgGradient.addColorStop(0, 'rgba(255, 235, 59, 0.95)');
+  bgGradient.addColorStop(1, 'rgba(255, 193, 7, 0.85)');
+  ctx.fillStyle = bgGradient;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.fill();
 
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+
+
+  ctx.strokeStyle = '#FF6F00';
+  ctx.lineWidth = markSize * 0.08;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.stroke();
+
+ 
+  ctx.font = `bold ${markSize * 1.2}px Arial, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+  ctx.shadowBlur = 6;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 3;
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillText('?', cx, cy + markSize * 0.05);
+
+  ctx.shadowColor = 'transparent';
+  ctx.strokeStyle = '#D84315';
+  ctx.lineWidth = markSize * 0.04;
+  ctx.strokeText('?', cx, cy + markSize * 0.05);
 
   ctx.restore();
 }
-
 
 // --------- ANIMATION ---------
 function startAnimation() {
   resetPositions();
   
-  const tankY = () => canvas.height * 0.35;
-
+  const tankY = () => {
+    const size = getCanvasSize();
+    return size.height * 0.68;
+  };
 
   function loop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+    const size = getCanvasSize();
+    ctx.clearRect(0, 0, size.width, size.height);
+    ctx.drawImage(bgImage, 0, 0, size.width, size.height);
 
-
-    updateRockets();
-    drawRockets();
-
+    updatePlanes();
+    drawPlanes();
 
     const y = tankY();
     const scale = tankH / 55;
     const tankW = 90 * scale;
 
-
     if (!collided) {
-      const distanceToMeet = canvas.width + tankW * 4;
+      const distanceToMeet = size.width + tankW * 4;
       const step = distanceToMeet / framesToCollide;
 
-
-      tankVNPosX    += step / 2;
+      tankVNPosX += step / 2;
       tankEnemyPosX -= step / 2;
-
 
       const vn = drawTankVN(tankVNPosX, y, false);
       drawTank(tankEnemy, tankEnemyPosX, y, false);
-
 
       if (tankVNPosX + vn.w >= tankEnemyPosX) {
         collided = true;
@@ -446,37 +553,37 @@ function startAnimation() {
       drawTankVN(tankVNPosX, y, shaking);
       drawTank(tankEnemy, tankEnemyPosX, y, shaking);
 
-
       updateParticles();
       drawParticles();
-
 
       const cx = (tankVNPosX + tankEnemyPosX) / 2;
       const cy = y - tankH * 0.8;
       drawQuestionMark(cx, cy);
 
-
       collisionFrame++;
     }
-
 
     requestAnimationFrame(loop);
   }
   loop();
 }
 
+
 window.addEventListener('orientationchange', () => {
   setTimeout(() => {
     resizeCanvas();
+    resetPositions();
     window.scrollTo(0, 0);
   }, 100);
 });
+
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && tankSound) {
     tankSound.pause();
   }
 });
+
 
 if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
   unmuteBtn.addEventListener('touchstart', (e) => {
@@ -498,7 +605,17 @@ if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
     }
     lastTouchEnd = now;
   }, false);
+  
+ 
+  document.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+  }, { passive: false });
 }
+
+
+window.addEventListener('scroll', () => {
+  window.scrollTo(0, 0);
+});
 </script>
 </body>
 </html>

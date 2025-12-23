@@ -5,73 +5,760 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>25CGD1-Group13-Level</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <link rel="stylesheet" href="../css/menu.css">
   
+  <style>
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+    }
+    
+    body, html {
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      font-family: 'Arial', sans-serif;
+    }
+    
+    .menu-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-image: url('../image/bgg.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      filter: brightness(0.6);
+    }
+    
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(139,0,0,0.5) 100%);
+      z-index: 2;
+    }
+    
+    .back-btn {
+      position: fixed;
+      top: 30px;
+      left: 30px;
+      z-index: 10;
+      padding: 15px 30px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #fff;
+      background: rgba(255, 107, 107, 0.9);
+      border: 3px solid #ffd700;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    
+    .back-btn:hover {
+      background: rgba(201, 42, 42, 0.9);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    }
+    
+    .back-btn i {
+      margin-right: 8px;
+    }
+    
+    .scoreboard-btn {
+      position: fixed;
+      top: 30px;
+      right: 30px;
+      z-index: 10;
+      padding: 15px 30px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #000;
+      background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+      border: 3px solid #ffd700;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+    
+    .scoreboard-btn::before {
+      content: '🏆';
+      position: absolute;
+      font-size: 70px;
+      opacity: 0.15;
+      right: -10px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+    
+    .scoreboard-btn:hover {
+      background: linear-gradient(135deg, #ffed4e 0%, #ffb347 100%);
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 8px 25px rgba(255, 215, 0, 0.6);
+    }
+    
+    .scoreboard-btn i {
+      margin-right: 8px;
+      animation: trophy-bounce 2s infinite ease-in-out;
+    }
+    
+    @keyframes trophy-bounce {
+      0%, 100% { 
+        transform: translateY(0) rotate(0deg); 
+      }
+      25% { 
+        transform: translateY(-3px) rotate(-5deg); 
+      }
+      75% { 
+        transform: translateY(-3px) rotate(5deg); 
+      }
+    }
+    
+    .score-display {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 10;
+      padding: 15px 30px;
+      background: rgba(0, 0, 0, 0.8);
+      border: 3px solid #ffd700;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(255, 215, 0, 0.5);
+      text-align: center;
+    }
+    
+    .score-label {
+      font-size: 14px;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 5px;
+    }
+    
+    .score-value {
+      font-size: 32px;
+      font-weight: bold;
+      color: #ffd700;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+      animation: score-glow 2s ease-in-out infinite;
+    }
+    
+    @keyframes score-glow {
+      0%, 100% {
+        text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+      }
+      50% {
+        text-shadow: 0 0 30px rgba(255, 215, 0, 1), 0 0 40px rgba(255, 215, 0, 0.6);
+      }
+    }
+    
+    .ai-btn {
+      position: fixed;
+      bottom: 30px;
+      left: 30px;
+      z-index: 10;
+      padding: 15px 30px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #fff;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: 3px solid #667eea;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+    
+    .ai-btn::before {
+      content: '🤖';
+      position: absolute;
+      font-size: 70px;
+      opacity: 0.15;
+      left: -10px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+    
+    .ai-btn:hover {
+      background: linear-gradient(135deg, #7c8ff0 0%, #8b5cb8 100%);
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+    }
+    
+    .ai-btn i {
+      margin-right: 8px;
+      animation: ai-pulse 2s infinite ease-in-out;
+    }
+    
+    @keyframes ai-pulse {
+      0%, 100% { 
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% { 
+        transform: scale(1.1);
+        opacity: 0.8;
+      }
+    }
+    
+    .menu-container {
+      position: fixed;
+      top: 75%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 3;
+      width: 90%;
+      max-width: 1200px;
+    }
+    
+    .levels-grid {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .level-btn {
+      position: relative;
+      width: 150px;
+      height: 180px;
+      border: 4px solid #ffd700;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 
+        0 10px 30px rgba(0, 0, 0, 0.5),
+        0 0 30px rgba(255, 215, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      animation: fadeInUp 0.8s ease-out backwards;
+      overflow: hidden;
+    }
+    
+    .level-btn:nth-child(1) { 
+      background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+      animation-delay: 0.1s; 
+    }
+    .level-btn:nth-child(2) { 
+      background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+      animation-delay: 0.2s; 
+    }
+    .level-btn:nth-child(3) { 
+      background: linear-gradient(135deg, #ff6b6b 0%, #c92a2a 100%);
+      animation-delay: 0.3s; 
+    }
+    .level-btn:nth-child(4) { 
+      background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
+      animation-delay: 0.4s; 
+    }
+    .level-btn:nth-child(5) { 
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      animation-delay: 0.5s; 
+    }
+    
+    .level-btn:hover {
+      transform: translateY(-10px) scale(1.05);
+      box-shadow: 
+        0 15px 40px rgba(0, 0, 0, 0.7),
+        0 0 50px rgba(255, 215, 0, 0.6);
+      border-color: #fff;
+    }
+    
+    .level-btn.completed {
+      border-color: #81c784;
+    }
+    
+    .level-btn.completed::after {
+      content: '✓';
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 35px;
+      height: 35px;
+      background: #4caf50;
+      border: 3px solid #81c784;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: #fff;
+      font-weight: bold;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+    }
+    
+    .level-score {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      padding: 5px 12px;
+      background: rgba(0, 0, 0, 0.8);
+      border: 2px solid #ffd700;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #ffd700;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      z-index: 3;
+    }
+    
+    .level-btn.locked {
+      background: linear-gradient(135deg, #424242 0%, #212121 100%) !important;
+      border-color: #666;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+    
+    .level-btn.locked::before {
+      content: '\f023';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 60px;
+      color: rgba(255, 255, 255, 0.3);
+      z-index: 2;
+    }
+    
+    .level-btn.locked .level-icon,
+    .level-btn.locked .level-number,
+    .level-btn.locked .level-label,
+    .level-btn.locked .level-score {
+      opacity: 0.3;
+    }
+    
+    .level-btn.locked:hover {
+      transform: scale(0.98);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    }
+    
+    .level-icon {
+      font-size: 50px;
+      filter: drop-shadow(0 3px 5px rgba(0,0,0,0.3));
+    }
+    
+    .level-number {
+      font-size: 36px;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 0 3px 10px rgba(0,0,0,0.5);
+    }
+    
+    .level-label {
+      font-size: 18px;
+      font-weight: bold;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+    
+    .particle {
+      position: fixed;
+      width: 4px;
+      height: 4px;
+      background: #ffd700;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 2;
+      animation: float 4s infinite ease-in-out;
+      box-shadow: 0 0 10px #ffd700;
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0) translateX(0);
+        opacity: 0;
+      }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      50% {
+        transform: translateY(-80vh) translateX(20px);
+      }
+    }
+    
+    @media (max-width: 1024px) {
+      .levels-grid {
+        gap: 20px;
+      }
+      
+      .level-btn {
+        width: 130px;
+        height: 160px;
+      }
+      
+      .level-icon {
+        font-size: 40px;
+      }
+      
+      .level-number {
+        font-size: 30px;
+      }
+      
+      .level-label {
+        font-size: 16px;
+      }
+      
+      .level-score {
+        font-size: 12px;
+        padding: 4px 10px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .score-display {
+        bottom: 15px;
+        right: 15px;
+        padding: 10px 20px;
+      }
+      
+      .score-label {
+        font-size: 11px;
+      }
+      
+      .score-value {
+        font-size: 24px;
+      }
+      
+      .back-btn {
+        top: 15px;
+        left: auto;
+        right: 15px;
+        padding: 10px 18px;
+        font-size: 14px;
+      }
+      
+      .scoreboard-btn {
+        top: 65px;
+        right: 15px;
+        padding: 10px 18px;
+        font-size: 14px;
+      }
+      
+      .scoreboard-btn::before {
+        font-size: 50px;
+        right: -5px;
+      }
+      
+      .ai-btn {
+        bottom: 15px;
+        left: 15px;
+        padding: 10px 18px;
+        font-size: 14px;
+      }
+      
+      .ai-btn::before {
+        font-size: 50px;
+        left: -5px;
+      }
+      
+      .levels-grid {
+        gap: 15px;
+      }
+      
+      .level-btn {
+        width: 110px;
+        height: 140px;
+      }
+      
+      .level-icon {
+        font-size: 35px;
+      }
+      
+      .level-number {
+        font-size: 26px;
+      }
+      
+      .level-label {
+        font-size: 14px;
+      }
+      
+      .level-score {
+        font-size: 11px;
+        padding: 3px 8px;
+      }
+    }
+    
+    @media (max-width: 600px) {
+      .score-display {
+        bottom: 12px;
+        right: 12px;
+        padding: 8px 15px;
+      }
+      
+      .score-label {
+        font-size: 10px;
+        margin-bottom: 3px;
+      }
+      
+      .score-value {
+        font-size: 20px;
+      }
+      
+      .back-btn {
+        top: 12px;
+        right: 12px;
+        padding: 8px 15px;
+        font-size: 13px;
+      }
+      
+      .scoreboard-btn {
+        top: 55px;
+        right: 12px;
+        padding: 8px 15px;
+        font-size: 13px;
+      }
+      
+      .ai-btn {
+        bottom: 12px;
+        left: 12px;
+        padding: 8px 15px;
+        font-size: 13px;
+      }
+      
+      .levels-grid {
+        gap: 12px;
+        max-width: 350px;
+        margin: 0 auto;
+      }
+      
+      .level-btn {
+        width: 100px;
+        height: 130px;
+      }
+      
+      .level-icon {
+        font-size: 30px;
+      }
+      
+      .level-number {
+        font-size: 24px;
+      }
+      
+      .level-label {
+        font-size: 12px;
+      }
+      
+      .level-score {
+        font-size: 10px;
+        padding: 2px 6px;
+      }
+      
+      .level-btn.locked::before {
+        font-size: 40px;
+      }
+    }
+    
+    @media (max-width: 926px) and (orientation: landscape) {
+      .menu-container {
+        width: 95%;
+        top: 50%;
+      }
+      
+      .score-display {
+        bottom: 10px;
+        right: 10px;
+        padding: 8px 15px;
+      }
+      
+      .score-value {
+        font-size: 20px;
+      }
+      
+      .levels-grid {
+        gap: 15px;
+      }
+      
+      .level-btn {
+        width: 100px;
+        height: 120px;
+      }
+      
+      .back-btn {
+        top: 10px;
+        left: 10px;
+        right: auto;
+        padding: 8px 15px;
+        font-size: 13px;
+      }
+      
+      .scoreboard-btn {
+        top: 10px;
+        right: 10px;
+        padding: 8px 15px;
+        font-size: 13px;
+      }
+      
+      .ai-btn {
+        bottom: 10px;
+        left: 10px;
+        padding: 8px 15px;
+        font-size: 13px;
+      }
+    }
+    
+    @media (max-width: 380px) {
+      .score-display {
+        bottom: 10px;
+        right: 10px;
+        padding: 6px 12px;
+      }
+      
+      .score-label {
+        font-size: 9px;
+      }
+      
+      .score-value {
+        font-size: 18px;
+      }
+      
+      .back-btn,
+      .scoreboard-btn,
+      .ai-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+      
+      .back-btn {
+        top: 10px;
+        right: 10px;
+      }
+      
+      .scoreboard-btn {
+        top: 48px;
+        right: 10px;
+      }
+      
+      .ai-btn {
+        bottom: 10px;
+        left: 10px;
+      }
+      
+      .back-btn i,
+      .scoreboard-btn i,
+      .ai-btn i {
+        margin-right: 5px;
+      }
+    }
+  </style>
 </head>
 <body>
-  <!-- Background -->
   <div class="menu-bg"></div>
   <div class="overlay"></div>
   
-  <!-- Back button -->
+  <div class="score-display">
+    <div class="score-label">📊 Tổng Điểm</div>
+    <div class="score-value" id="totalScoreDisplay">0</div>
+  </div>
+  
   <button class="back-btn" onclick="goBack()">
     <i class="fas fa-arrow-left"></i> Quay lại
   </button>
   
-  <!-- Main container -->
+  <button class="scoreboard-btn" onclick="viewScoreboard()">
+    <i class="fas fa-trophy"></i> Bảng Xếp Hạng
+  </button>
+  
+  <button class="ai-btn" onclick="openAI()">
+    <i class="fas fa-robot"></i> AI Helper
+  </button>
+  
   <div class="menu-container">
     <div class="levels-grid">
-      <!-- Màn 1 -->
-      <div class="level-btn" onclick="startLevel(1)">
+      <div class="level-btn" onclick="startLevel(1)" data-level="1">
+        <div class="level-score" id="score-1">0</div>
         <div class="level-icon">⭐</div>
         <div class="level-number">1</div>
-        <div class="level-label">Màn 1</div>
+        <div class="level-label">MÀN 1</div>
       </div>
       
-      <!-- Màn 2 -->
-      <div class="level-btn" onclick="startLevel(2)">
+      <div class="level-btn" onclick="startLevel(2)" data-level="2">
+        <div class="level-score" id="score-2">0</div>
         <div class="level-icon">🏆</div>
         <div class="level-number">2</div>
-        <div class="level-label">Màn 2</div>
+        <div class="level-label">MÀN 2</div>
       </div>
       
-      <!-- Màn 3 -->
-      <div class="level-btn" onclick="startLevel(3)">
+      <div class="level-btn" onclick="startLevel(3)" data-level="3">
+        <div class="level-score" id="score-3">0</div>
         <div class="level-icon">🔥</div>
         <div class="level-number">3</div>
-        <div class="level-label">Màn 3</div>
+        <div class="level-label">MÀN 3</div>
       </div>
       
-      <!-- Màn 4 -->
-      <div class="level-btn" onclick="startLevel(4)">
+      <div class="level-btn" onclick="startLevel(4)" data-level="4">
+        <div class="level-score" id="score-4">0</div>
         <div class="level-icon">💥</div>
         <div class="level-number">4</div>
-        <div class="level-label">Màn 4</div>
+        <div class="level-label">MÀN 4</div>
       </div>
       
-      <!-- Màn 5 (Boss) -->
-      <div class="level-btn" onclick="startLevel(5)">
+      <div class="level-btn" onclick="startLevel(5)" data-level="5">
+        <div class="level-score" id="score-5">0</div>
         <div class="level-icon">👑</div>
         <div class="level-number">5</div>
-        <div class="level-label">Boss</div>
+        <div class="level-label">BOSS</div>
       </div>
     </div>
   </div>
 
-
   <script>
-    // ==================== LOAD PROGRESS ====================
     let completedLevels = JSON.parse(localStorage.getItem('completedLevels') || '[]');
-    let currentUnlockedLevel = parseInt(localStorage.getItem('currentUnlockedLevel') || '1');
+    let totalScore = parseInt(localStorage.getItem('totalScore') || '0');
+    let levelScores = JSON.parse(localStorage.getItem('levelScores') || '{}');
     
-    // ==================== UPDATE LEVEL STATES ====================
+    document.getElementById('totalScoreDisplay').textContent = totalScore;
+    
+    function displayLevelScores() {
+      for (let level = 1; level <= 5; level++) {
+        const scoreElement = document.getElementById(`score-${level}`);
+        
+        if (levelScores[level]) {
+          const scores = Object.values(levelScores[level]);
+          const levelTotal = scores.reduce((sum, score) => sum + score, 0);
+          scoreElement.textContent = `${levelTotal}`;
+        } else {
+          scoreElement.textContent = '0';
+        }
+      }
+    }
+    
+    displayLevelScores();
+    
     function updateLevelStates() {
       const levelBtns = document.querySelectorAll('.level-btn');
       
       levelBtns.forEach((btn, index) => {
         const level = index + 1;
         
-        // Mark completed levels
         if (completedLevels.includes(level)) {
           btn.classList.add('completed');
         }
@@ -80,7 +767,6 @@
     
     updateLevelStates();
     
-    // ==================== CREATE FLOATING PARTICLES ====================
     function createParticles() {
       for (let i = 0; i < 30; i++) {
         const particle = document.createElement('div');
@@ -95,30 +781,46 @@
     
     createParticles();
     
-    // ==================== START LEVEL ====================
     function startLevel(level) {
-      // Redirect to level page
+      const levelBtn = document.querySelectorAll('.level-btn')[level - 1];
+      
+      if (levelBtn.classList.contains('locked')) {
+        alert('🔒 Màn này đang bị khóa! Hãy hoàn thành màn trước.');
+        return;
+      }
+      
       window.location.href = `man${level}.html`;
     }
     
-    // ==================== GO BACK ====================
+    function viewScoreboard() {
+      window.location.href = 'scoreboard.html';
+    }
+    
+    function openAI() {
+      window.location.href = '../AI.html';
+    }
+    
     function goBack() {
       window.location.href = '../index.html';
     }
     
-    // ==================== KEYBOARD SUPPORT ====================
     document.addEventListener('keydown', (e) => {
       if (e.key >= '1' && e.key <= '5') {
         const level = parseInt(e.key);
         startLevel(level);
       } else if (e.key === 'Escape') {
         goBack();
+      } else if (e.key.toLowerCase() === 's') {
+        viewScoreboard();
+      } else if (e.key.toLowerCase() === 'a') {
+        openAI();
       }
     });
     
-    // ==================== DEBUG INFO (Xóa khi release) ====================
-    console.log('Completed Levels:', completedLevels);
-    console.log('Current Unlocked Level:', currentUnlockedLevel);
+    console.log('✅ Completed Levels:', completedLevels);
+    console.log('📊 Total Score:', totalScore);
+    console.log('💡 Press S to view Scoreboard');
+    console.log('🤖 Press A to open AI Helper');
   </script>
 </body>
 </html>

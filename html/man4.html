@@ -2,9 +2,10 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Màn 4 - Tổng Công Kích Sài Gòn</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="../css/man4.css">
@@ -59,7 +60,7 @@
         
         <div class="timer-box">
           <div class="timer-label">⏰ THỜI GIAN</div>
-          <div class="timer" id="timer">30</div>
+          <div class="timer" id="timer">90</div>
         </div>
         
         <div class="question-text" id="questionText"></div>
@@ -68,6 +69,25 @@
       <div class="question-right">
         <div class="answers" id="answers"></div>
       </div>
+    </div>
+  </div>
+  
+  <!-- ========== THEORY BUTTON ========== -->
+  <button class="theory-btn" id="theoryBtn">
+    <i class="fas fa-book"></i>
+    <span>Lý thuyết</span>
+  </button>
+</div>
+
+<!-- ========== THEORY POPUP ========== -->
+<div class="theory-popup-overlay" id="theoryPopup">
+  <div class="theory-popup-content">
+    <div class="theory-popup-header">
+      <div class="theory-popup-icon">💥</div>
+      <h2>Tổng Công Kích Sài Gòn 1975</h2>
+    </div>
+    <div class="theory-popup-body">
+      <p>Ngày 26/4/1975, quân ta bắt đầu tổng công kích từ 5 hướng. Không quân địch hoảng loạn, hệ thống phòng thủ bị tê liệt.</p>
     </div>
   </div>
 </div>

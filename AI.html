@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <title>Chat với Sử quan AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #020617;
+        --panel: #020617ee;
+        --border: #1f2937;
+        --accent: #22c55e;
+        --accent-soft: #064e3b;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: radial-gradient(circle at 0 0, rgba(248, 250, 252, 0.04), transparent 55%),
+          radial-gradient(circle at 100% 100%, rgba(248, 250, 252, 0.04), transparent 55%),
+          var(--bg);
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        color: var(--text);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px 12px;
+      }
+      .container {
+        width: 100%;
+        max-width: 600px;
+        text-align: center;
+        padding: 40px 30px;
+        border-radius: 24px;
+        border: 1px solid var(--border);
+        background: linear-gradient(to bottom right, #020617ee, #020617);
+        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.8);
+      }
+      .logo-badge {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 20px;
+        border-radius: 999px;
+        background: radial-gradient(circle at 30% 0, #facc15, #f97316);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 48px;
+        box-shadow: 0 15px 35px rgba(245, 158, 11, 0.5);
+        animation: float 3s ease-in-out infinite;
+      }
+      @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+      h1 {
+        margin: 0 0 12px;
+        font-size: 32px;
+        letter-spacing: 0.02em;
+        background: linear-gradient(to right, #22c55e, #14b8a6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .subtitle {
+        margin: 0 0 8px;
+        font-size: 16px;
+        color: var(--muted);
+      }
+      .tech-badge {
+        display: inline-block;
+        padding: 6px 14px;
+        margin: 0 0 30px;
+        border-radius: 999px;
+        border: 1px solid #374151;
+        font-size: 12px;
+        color: var(--muted);
+        background: rgba(15, 23, 42, 0.6);
+      }
+      .description {
+        margin: 0 0 30px;
+        font-size: 14px;
+        line-height: 1.7;
+        color: var(--muted);
+      }
+      .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 16px 40px;
+        margin: 10px 0;
+        border: none;
+        border-radius: 999px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        background: linear-gradient(to right, #22c55e, #16a34a);
+        color: #022c22;
+        text-decoration: none;
+        box-shadow: 0 12px 28px rgba(16, 185, 129, 0.55);
+        transition: all 0.3s ease;
+      }
+      .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 16px 35px rgba(16, 185, 129, 0.7);
+      }
+      .btn-secondary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 28px;
+        margin: 10px 8px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        background: rgba(15, 23, 42, 0.6);
+        color: var(--text);
+        text-decoration: none;
+        transition: all 0.3s ease;
+      }
+      .btn-secondary:hover {
+        border-color: var(--accent);
+        background: rgba(15, 23, 42, 0.9);
+      }
+      .features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin: 30px 0 0;
+      }
+      .feature {
+        padding: 20px 15px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        background: rgba(15, 23, 42, 0.5);
+      }
+      .feature-icon {
+        font-size: 32px;
+        margin-bottom: 10px;
+      }
+      .feature-title {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0 0 5px;
+      }
+      .feature-desc {
+        font-size: 12px;
+        color: var(--muted);
+        margin: 0;
+      }
+      
+      @media (max-width: 600px) {
+        .container {
+          padding: 30px 20px;
+        }
+        h1 {
+          font-size: 26px;
+        }
+        .btn-primary {
+          width: 100%;
+          justify-content: center;
+        }
+        .features {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo-badge">📜</div>
+      
+      <h1>Sử Quan AI</h1>
+      <p class="subtitle">Trợ lý Lịch sử Việt Nam </p>
+      <div class="tech-badge">Watson0609/lichsu · Powered by Hugging Face 🤗</div>
+      
+      <p class="description">
+        Khám phá lịch sử Việt Nam qua các giai đoạn với AI được huấn luyện chuyên biệt.
+        Đặt câu hỏi về các sự kiện, nhân vật lịch sử và nhận câu trả lời chi tiết.
+      </p>
+      
+      <a href="https://huggingface.co/spaces/Watson0609/lichsu" target="_blank" class="btn-primary">
+        <span>🚀 Mở Chat với AI</span>
+        <span>→</span>
+      </a>
+      
+      <div style="margin-top: 15px;">
+        <a href="html/menu.html" class="btn-secondary">
+          <span>←</span>
+          <span>Quay lại Menu</span>
+        </a>
+      </div>
+      
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon">🏛️</div>
+          <h3 class="feature-title">Lịch sử VN</h3>
+          <p class="feature-desc">Từ thời Hùng Vương đến hiện đại</p>
+        </div>
+        
+        <div class="feature">
+          <div class="feature-icon">🤖</div>
+          <h3 class="feature-title">AI Thông minh</h3>
+          <p class="feature-desc">Model llama.cpp GGUF</p>
+        </div>
+        
+        <div class="feature">
+          <div class="feature-icon">⚡</div>
+          <h3 class="feature-title">Trả lời nhanh</h3>
+          <p class="feature-desc">Câu trả lời chi tiết, chính xác</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

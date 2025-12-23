@@ -2,9 +2,10 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Chiến Thắng</title>
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -16,127 +17,192 @@
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
     }
-    body, html {
-      overflow: hidden;
-      background: #000;
-      font-family: 'Segoe UI', Tahoma, sans-serif;
-      height: 100vh;
-      width: 100vw;
-      position: fixed;
-    }
-    canvas {
-      display: block;
+    
+    html {
       width: 100%;
       height: 100%;
     }
     
-    @media (max-width: 768px) {
-      body, html {
+    body {
+      overflow: hidden;
+      background: #000;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      width: 100%;
+      height: 100%;
+      position: fixed;
+      touch-action: none;
+      overscroll-behavior: none;
+    }
+    
+    canvas {
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      max-width: 100vw;
+      max-height: 100vh;
+      object-fit: contain;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+    }
+    
+    @media (max-width: 425px) {
+      body {
         height: 100dvh;
+      }
+      
+      canvas {
+        max-height: 100dvh;
+      }
+    }
+    
+    @media (max-width: 375px) {
+      body {
+        height: 100dvh;
+      }
+    }
+    
+    @media (max-height: 500px) and (orientation: landscape) {
+      body {
+        height: 100dvh;
+      }
+      
+      canvas {
+        max-height: 100dvh;
       }
     }
   </style>
 </head>
 <body>
 
-
 <audio id="bgAudio" autoplay loop muted preload="auto">
   <source src="../sound/fire.mp3" type="audio/mpeg">
 </audio>
 
-
 <canvas id="canvas"></canvas>
-
 
 <script>
 const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext('2d', { alpha: false });
 
-
-// ========== FIX CANVAS SIZE ===========
-function resizeCanvas() {
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
-  
-  canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
-  
-  ctx.scale(dpr, dpr);
-  
-  canvas.style.width = rect.width + 'px';
-  canvas.style.height = rect.height + 'px';
-}
-
-
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
-
-
-function getDisplaySize() {
-  return {
-    width: canvas.getBoundingClientRect().width,
-    height: canvas.getBoundingClientRect().height
-  };
-}
-
-
-// ========== AUDIO SETUP ==========
 const bgAudio = document.getElementById('bgAudio');
-
 
 window.addEventListener('load', () => {
   bgAudio.muted = false;
   bgAudio.pause();
 });
 
-
 const fireSound = new Audio('../sound/fire.mp3');
 const hitSound = new Audio('../sound/hit.wav');
 const tankRunSound = new Audio('../sound/xechay.mp3');
-
 
 fireSound.volume = 0.8;
 hitSound.volume = 0.9;
 tankRunSound.volume = 0.7;
 tankRunSound.loop = true;
 
+let audioUnlocked = false;
+
+function unlockAudio() {
+  if (audioUnlocked) return;
+  
+  fireSound.play().then(() => {
+    fireSound.pause();
+    fireSound.currentTime = 0;
+  }).catch(() => {});
+  
+  hitSound.play().then(() => {
+    hitSound.pause();
+    hitSound.currentTime = 0;
+  }).catch(() => {});
+  
+  tankRunSound.play().then(() => {
+    tankRunSound.pause();
+    tankRunSound.currentTime = 0;
+  }).catch(() => {});
+  
+  audioUnlocked = true;
+  console.log('✅ Audio unlocked!');
+}
+
+document.addEventListener('click', unlockAudio, { once: true });
+document.addEventListener('touchstart', unlockAudio, { once: true });
+document.addEventListener('keydown', unlockAudio, { once: true });
 
 function playFireSound() {
+  if (!audioUnlocked) unlockAudio();
   fireSound.currentTime = 0;
   fireSound.play().then(() => {
     console.log('✅ 🔫 Fire sound!');
   }).catch(err => console.log('Fire sound error:', err));
 }
 
-
 function playHitSound() {
+  if (!audioUnlocked) unlockAudio();
   hitSound.currentTime = 0;
   hitSound.play().then(() => {
     console.log('✅ 💥 Hit sound!');
   }).catch(err => console.log('Hit sound error:', err));
 }
 
-
 function playTankRunSound() {
+  if (!audioUnlocked) unlockAudio();
   tankRunSound.currentTime = 0;
   tankRunSound.play().then(() => {
     console.log('✅ 🚗 Tank run sound!');
   }).catch(err => console.log('Tank run sound error:', err));
 }
 
-
 function stopTankRunSound() {
   tankRunSound.pause();
   tankRunSound.currentTime = 0;
 }
 
+function getActualVH() {
+  return window.innerHeight || document.documentElement.clientHeight;
+}
 
-// ============ DURATION ============
-const BULLET_DURATION = 2000;     
-const EXPLOSION_DURATION = 4000;  
+function getActualVW() {
+  return window.innerWidth || document.documentElement.clientWidth;
+}
+
+function resizeCanvas() {
+  const vw = getActualVW();
+  const vh = getActualVH();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  
+  canvas.width = vw * dpr;
+  canvas.height = vh * dpr;
+  
+  ctx.scale(dpr, dpr);
+  
+  canvas.style.width = `${vw}px`;
+  canvas.style.height = `${vh}px`;
+}
+
+let resizeTimeout;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    resizeCanvas();
+  }, 100);
+});
+
+resizeCanvas();
+
+function getCanvasSize() {
+  return {
+    width: getActualVW(),
+    height: getActualVH()
+  };
+}
+
+const BULLET_DURATION = 800;     
+const EXPLOSION_DURATION = 500;  
 const MUZZLE_DELAY = 500;
 const BULLET_DELAY = 300;
-
 
 let phase = 'prepare';
 let phaseStartTime = 0; 
@@ -144,7 +210,6 @@ let tankH;
 let tankVNPosX;
 let tankEnemyPosX;
 let tankY;
-
 
 let muzzleFlash = { active: false, x: 0, y: 0, frame: 0, maxFrame: 10 };
 let bullet = null;
@@ -156,28 +221,21 @@ let victoryText = {
   scale: 0
 };
 
+let planes = [];
 
-const rocketFont = "300 32px 'Font Awesome 6 Free'";
-let rockets = [];
-
-
-// ========== IMAGES ==========
 const bgImage = new Image();
 const tankVN = new Image();
 const tankEnemy = new Image();
 
-
 bgImage.src = '../image/bg.jpg';
 tankVN.src = '../image/tank1.png';
 tankEnemy.src = '../image/tank2.png';
-
 
 let loaded = 0;
 function onLoaded() {
   loaded++;
   if (loaded === 3) startAnimation();
 }
-
 
 bgImage.onload = onLoaded;
 bgImage.onerror = () => { loaded++; if (loaded === 3) startAnimation(); };
@@ -186,64 +244,77 @@ tankVN.onerror = () => { loaded++; if (loaded === 3) startAnimation(); };
 tankEnemy.onload = onLoaded;
 tankEnemy.onerror = () => { loaded++; if (loaded === 3) startAnimation(); };
 
-
-// ========== ROCKET ==========
-function spawnRocket() {
-  const size = getDisplaySize();
+function spawnPlane() {
+  const size = getCanvasSize();
   const fromLeft = Math.random() < 0.5;
-  const margin = size.width * 0.1;
+  const margin = size.width * 0.05;
   const startX = fromLeft ? -margin : size.width + margin;
   const endX = fromLeft ? size.width + margin : -margin;
 
-
-  rockets.push({
-    fromLeft, startX, endX,
-    yBase: size.height * (0.15 + Math.random() * 0.2),
-    height: size.height * (0.08 + Math.random() * 0.08),
+  planes.push({
+    fromLeft,
+    startX,
+    endX,
+    y: size.height * (0.05 + Math.random() * 0.15),
+    waveAmplitude: size.height * (0.015 + Math.random() * 0.025),
+    waveFrequency: 2 + Math.random() * 2,
     t: 0,
-    speed: 0.002 + Math.random() * 0.003
+    speed: 0.003 + Math.random() * 0.004
   });
 }
 
-
-function getBallisticPos(startX, endX, baseY, height, t) {
+function getPlanePos(startX, endX, baseY, amplitude, frequency, t) {
   const x = startX + (endX - startX) * t;
-  const parabola = 4 * t * (1 - t);
-  const y = baseY - height * parabola;
+  const y = baseY + Math.sin(t * Math.PI * frequency) * amplitude;
   return { x, y };
 }
 
-
-function updateRockets() {
-  rockets.forEach(r => { r.t += r.speed; });
-  rockets = rockets.filter(r => {
-    if (r.t > 1.1) { spawnRocket(); return false; }
+function updatePlanes() {
+  planes.forEach(p => { p.t += p.speed; });
+  planes = planes.filter(p => {
+    if (p.t > 1.05) {
+      spawnPlane();
+      return false;
+    }
     return true;
   });
-  while (rockets.length < 5) spawnRocket();
+  while (planes.length < 4) spawnPlane();
 }
 
-
-function drawRockets() {
+function drawPlanes() {
+  const size = getCanvasSize();
+  const fontSize = Math.max(24, Math.min(size.width, size.height) * 0.06);
+  
   ctx.save();
-  ctx.font = rocketFont;
+  ctx.font = `300 ${fontSize}px Arial`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  rockets.forEach(r => {
-    const pos = getBallisticPos(r.startX, r.endX, r.yBase, r.height, r.t);
-    const angle = r.fromLeft ? Math.atan2(0.3, 1) : Math.atan2(-0.3, -1);
+
+  planes.forEach(p => {
+    const pos = getPlanePos(p.startX, p.endX, p.y, p.waveAmplitude, p.waveFrequency, p.t);
+    
+    const derivative = Math.cos(p.t * Math.PI * p.waveFrequency) * p.waveAmplitude * p.waveFrequency * Math.PI;
+    const dx = p.endX - p.startX;
+    const angle = Math.atan2(derivative, dx);
+    
     ctx.save();
     ctx.translate(pos.x, pos.y);
     ctx.rotate(angle);
+    
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    
     ctx.fillStyle = '#555';
-    ctx.fillText('🚀', 0, 0);
+    ctx.fillText('✈️', 0, 0);
+    
     ctx.restore();
   });
+
   ctx.restore();
 }
 
-
-// ========== MUZZLE FLASH ==========
 function startMuzzleFlash(x, y) {
   muzzleFlash.active = true;
   muzzleFlash.x = x;
@@ -253,7 +324,6 @@ function startMuzzleFlash(x, y) {
   playFireSound();
 }
 
-
 function updateMuzzleFlash() {
   if (muzzleFlash.active) {
     muzzleFlash.frame++;
@@ -262,7 +332,6 @@ function updateMuzzleFlash() {
     }
   }
 }
-
 
 function drawMuzzleFlash() {
   if (!muzzleFlash.active) return;
@@ -307,8 +376,6 @@ function drawMuzzleFlash() {
   ctx.restore();
 }
 
-
-// ========== BULLET ==========
 function createBullet(startX, startY, targetX, targetY, duration) {
   return {
     startX, startY, x: startX, y: startY,
@@ -318,7 +385,6 @@ function createBullet(startX, startY, targetX, targetY, duration) {
     trail: [], rotation: 0
   };
 }
-
 
 function updateBullet() {
   if (!bullet || !bullet.active) return;
@@ -341,7 +407,6 @@ function updateBullet() {
     bullet.active = false;
   }
 }
-
 
 function drawBullet() {
   if (!bullet || !bullet.active) return;
@@ -390,8 +455,6 @@ function drawBullet() {
   ctx.restore();
 }
 
-
-// ========== TANK FIRE ==========
 function spawnTankFire(cx, cy) {
   tankFireParticles = [];
   for (let i = 0; i < 30; i++) {
@@ -405,7 +468,6 @@ function spawnTankFire(cx, cy) {
     });
   }
 }
-
 
 function updateTankFire(cx, cy) {
   tankFireParticles.forEach(p => {
@@ -426,7 +488,6 @@ function updateTankFire(cx, cy) {
     });
   }
 }
-
 
 function drawTankFire(cx, cy) {
   ctx.save();
@@ -451,13 +512,11 @@ function drawTankFire(cx, cy) {
   ctx.restore();
 }
 
-
-// ========== EXPLOSION - ✅ FIX: ĐỔI const → let ==========
 function startCombinedExplosion(cx, cy, duration) {
   playHitSound();
   
   combinedParticles = [];
-  let frames = (duration / 1000) * 60; // ✅ ĐỔI const → let
+  let frames = (duration / 1000) * 60;
   
   for (let i = 0; i < 200; i++) {
     let angle = Math.random() * Math.PI * 2;
@@ -492,7 +551,6 @@ function startCombinedExplosion(cx, cy, duration) {
   spawnTankFire(cx, cy);
 }
 
-
 function updateCombinedExplosion() {
   combinedParticles.forEach(p => {
     p.x += p.vx;
@@ -512,7 +570,6 @@ function updateCombinedExplosion() {
   
   combinedParticles = combinedParticles.filter(p => p.life > 0);
 }
-
 
 function drawCombinedExplosion() {
   ctx.save();
@@ -557,8 +614,6 @@ function drawCombinedExplosion() {
   ctx.restore();
 }
 
-
-// ========== VICTORY TEXT ==========
 function updateVictoryText() {
   if (victoryText.active) {
     if (victoryText.alpha < 1) victoryText.alpha += 0.02;
@@ -566,11 +621,13 @@ function updateVictoryText() {
   }
 }
 
-
 function drawVictoryText() {
   if (!victoryText.active) return;
   
-  let size = getDisplaySize();
+  let size = getCanvasSize();
+  const baseSize = Math.min(size.width, size.height);
+  const titleSize = Math.max(50, baseSize * 0.09);
+  const iconSize = Math.max(30, baseSize * 0.055);
   
   ctx.save();
   ctx.globalAlpha = victoryText.alpha;
@@ -580,31 +637,30 @@ function drawVictoryText() {
   ctx.shadowColor = '#ff0';
   ctx.shadowBlur = 40;
   
-  ctx.font = 'bold 80px Arial';
+  ctx.font = `bold ${titleSize}px Arial`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   
   ctx.strokeStyle = '#ffd700';
-  ctx.lineWidth = 8;
+  ctx.lineWidth = Math.max(5, titleSize * 0.1);
   ctx.strokeText('CHIẾN THẮNG', 0, 0);
   
-  let gradient = ctx.createLinearGradient(0, -40, 0, 40);
+  let gradient = ctx.createLinearGradient(0, -titleSize/2, 0, titleSize/2);
   gradient.addColorStop(0, '#ff0000');
   gradient.addColorStop(0.5, '#ff6600');
   gradient.addColorStop(1, '#ff0000');
   ctx.fillStyle = gradient;
   ctx.fillText('CHIẾN THẮNG', 0, 0);
   
-  ctx.font = '50px "Font Awesome 6 Free"';
+  ctx.font = `${iconSize}px "Font Awesome 6 Free"`;
   ctx.fillStyle = '#ffd700';
-  ctx.fillText('\uf005', -250, 0);
-  ctx.fillText('\uf005', 250, 0);
+  const starOffset = titleSize * 3.5;
+  ctx.fillText('\uf005', -starOffset, 0);
+  ctx.fillText('\uf005', starOffset, 0);
   
   ctx.restore();
 }
 
-
-// ========== TANK DRAWING ==========
 function drawDust(x, y, scale) {
   ctx.fillStyle = 'rgba(139,69,19,0.5)';
   for (let i = 0; i < 10; i++) {
@@ -615,7 +671,6 @@ function drawDust(x, y, scale) {
     ctx.fill();
   }
 }
-
 
 function drawTank(img, x, y) {
   if (!img.complete) return { w: 0, h: 0 };
@@ -628,7 +683,6 @@ function drawTank(img, x, y) {
   return { w, h };
 }
 
-
 function drawTankVN(x, y) {
   let scale = tankH / 55;
   let w = 90 * scale;
@@ -638,12 +692,10 @@ function drawTankVN(x, y) {
   return drawTank(tankVN, x, y);
 }
 
-
-// ========== MAIN ANIMATION ==========
 function startAnimation() {
-  let size = getDisplaySize();
+  let size = getCanvasSize();
   
-  tankH = size.height * 0.25;
+  tankH = size.height * (size.width < 425 ? 0.22 : 0.25);
   tankY = size.height * 0.65;
   
   let scale = tankH / 55;
@@ -653,9 +705,8 @@ function startAnimation() {
   tankVNPosX = size.width * 0.15;
   tankEnemyPosX = tankVNPosX + tankW + gap;
   
-  for (let i = 0; i < 5; i++) spawnRocket();
+  for (let i = 0; i < 4; i++) spawnPlane();
   
-  // TIMELINE
   setTimeout(() => {
     phase = 'muzzle_flash';
     let muzzleX = tankVNPosX + tankW;
@@ -685,19 +736,18 @@ function startAnimation() {
     playTankRunSound();
   }, MUZZLE_DELAY + BULLET_DELAY + BULLET_DURATION + EXPLOSION_DURATION);
 
-
   function loop() {
     if (phase === 'ended') return;
     
-    let size = getDisplaySize();
+    let size = getCanvasSize();
     ctx.clearRect(0, 0, size.width, size.height);
     
     if (bgImage.complete) {
       ctx.drawImage(bgImage, 0, 0, size.width, size.height);
     }
     
-    updateRockets();
-    drawRockets();
+    updatePlanes();
+    drawPlanes();
     
     drawTankVN(tankVNPosX, tankY);
     
@@ -745,7 +795,7 @@ function startAnimation() {
     }
     
     if (phase === 'moving') {
-      tankVNPosX += 2.5;
+      tankVNPosX += 25.5;
       updateVictoryText();
       drawVictoryText();
       
@@ -761,8 +811,6 @@ function startAnimation() {
   loop();
 }
 
-
-// Cleanup
 window.addEventListener('beforeunload', () => {
   stopTankRunSound();
 });
@@ -791,7 +839,15 @@ if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
     }
     lastTouchEnd = now;
   }, false);
+  
+  document.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+  }, { passive: false });
 }
+
+window.addEventListener('scroll', () => {
+  window.scrollTo(0, 0);
+});
 </script>
 </body>
 </html>

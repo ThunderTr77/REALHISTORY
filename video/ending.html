@@ -2,9 +2,10 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Kết Thúc - Đại Thắng Mùa Xuân 1975</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <style>
@@ -23,6 +24,7 @@
       position: fixed;
       background: #000;
       font-family: Arial, sans-serif;
+      touch-action: none;
     }
     
     .video-container {
@@ -32,11 +34,62 @@
       background: #000;
     }
     
-    /* YouTube iframe */
-    #youtube-iframe {
+    /* Streamable responsive wrapper */
+    .streamable-wrapper {
+      position: absolute;
       width: 100%;
       height: 100%;
+      top: 0;
+      left: 0;
+    }
+    
+    .streamable-wrapper iframe {
       border: none;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+    
+    /* Loading overlay */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 50;
+      transition: opacity 0.5s;
+    }
+    
+    .loading-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .spinner {
+      width: 60px;
+      height: 60px;
+      border: 4px solid rgba(255, 215, 0, 0.2);
+      border-top-color: #FFD700;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      margin-top: 20px;
+      color: #FFD700;
+      font-size: 16px;
     }
     
     /* Title Overlay */
@@ -49,6 +102,7 @@
       z-index: 100;
       animation: fadeIn 1s;
       pointer-events: none;
+      max-width: 90%;
     }
     
     .title-text {
@@ -61,6 +115,21 @@
       text-transform: uppercase;
       letter-spacing: 6px;
       margin-bottom: 8px;
+      animation: glow 2s ease-in-out infinite;
+    }
+    
+    @keyframes glow {
+      0%, 100% {
+        text-shadow: 
+          0 0 20px rgba(255, 215, 0, 0.8),
+          2px 2px 10px rgba(0, 0, 0, 0.9);
+      }
+      50% {
+        text-shadow: 
+          0 0 30px rgba(255, 215, 0, 1),
+          0 0 40px rgba(255, 215, 0, 0.6),
+          2px 2px 10px rgba(0, 0, 0, 0.9);
+      }
     }
     
     .subtitle-text {
@@ -77,9 +146,9 @@
       padding: 15px 35px;
       font-size: 18px;
       font-weight: bold;
-      color: #fff;
+      color: #000;
       background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-      border: 2px solid #fff;
+      border: 3px solid #fff;
       border-radius: 40px;
       cursor: pointer;
       box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
@@ -88,109 +157,282 @@
       letter-spacing: 2px;
       z-index: 100;
       animation: fadeIn 1s 0.5s both;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    
+    .return-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(255, 215, 0, 0.7);
     }
     
     .return-btn:active {
       transform: scale(0.95);
     }
     
+    .return-btn i {
+      margin-right: 8px;
+    }
+    
     @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+      from { 
+        opacity: 0; 
+        transform: translateY(20px);
+      }
+      to { 
+        opacity: 1; 
+        transform: translateY(0);
+      }
+    }
+    
+    /* Confetti effect */
+    .confetti {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      background: #FFD700;
+      pointer-events: none;
+      z-index: 90;
+      animation: fall 3s linear;
+    }
+    
+    @keyframes fall {
+      to {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+      }
     }
     
     /* Mobile */
     @media (max-width: 768px) {
-      .title-overlay { top: 15px; }
+      .title-overlay { 
+        top: 15px; 
+        max-width: 95%;
+      }
       
       .title-text { 
         font-size: 22px; 
         letter-spacing: 2px;
       }
       
-      .subtitle-text { font-size: 13px; }
+      .subtitle-text { 
+        font-size: 13px; 
+      }
+      
+      .return-btn {
+        bottom: 15px;
+        right: 15px;
+        padding: 12px 24px;
+        font-size: 15px;
+        min-width: 120px;
+        min-height: 48px;
+      }
+    }
+    
+    @media (max-width: 600px) {
+      .title-text { 
+        font-size: 20px; 
+        letter-spacing: 1px;
+      }
+      
+      .subtitle-text { 
+        font-size: 12px; 
+      }
       
       .return-btn {
         bottom: 12px;
         right: 12px;
-        padding: 12px 24px;
-        font-size: 15px;
-        min-width: 110px;
-        min-height: 44px;
+        padding: 10px 20px;
+        font-size: 14px;
       }
     }
     
     @media (max-width: 375px) {
-      .title-text { font-size: 18px; }
-      .subtitle-text { font-size: 11px; }
+      .title-text { 
+        font-size: 18px; 
+      }
+      
+      .subtitle-text { 
+        font-size: 11px; 
+      }
+      
       .return-btn {
-        padding: 10px 20px;
+        padding: 10px 18px;
         font-size: 13px;
+        min-width: 100px;
+      }
+    }
+    
+    /* Landscape mode */
+    @media (max-height: 500px) and (orientation: landscape) {
+      .title-overlay {
+        top: 10px;
+      }
+      
+      .title-text {
+        font-size: 18px;
+      }
+      
+      .subtitle-text {
+        font-size: 11px;
+      }
+      
+      .return-btn {
+        bottom: 10px;
+        right: 10px;
+        padding: 8px 16px;
+        font-size: 12px;
       }
     }
   </style>
 </head>
 <body>
   
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">Đang tải video...</div>
+  </div>
+  
+  <!-- Title Overlay -->
   <div class="title-overlay">
     <div class="title-text">🏆 CHIẾN THẮNG 🏆</div>
     <div class="subtitle-text">Đại Thắng Mùa Xuân - 30/4/1975</div>
   </div>
   
+  <!-- Video Container -->
   <div class="video-container">
-    <iframe 
-      id="youtube-iframe"
-      src="https://www.youtube.com/embed/1s_mRhZwdtM?autoplay=1&controls=1&rel=0&modestbranding=1&playsinline=1"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      allowfullscreen>
-    </iframe>
+    <div class="streamable-wrapper">
+      <!-- ✅ Streamable Video - jylnge -->
+      <iframe 
+        id="streamable-player"
+        allow="fullscreen;autoplay" 
+        allowfullscreen 
+        src="https://streamable.com/e/jylnge?autoplay=1" 
+        loading="eager">
+      </iframe>
+    </div>
   </div>
   
+  <!-- Return Button -->
   <button class="return-btn" onclick="returnToMenu()">
-    <i class="fas fa-home"></i> Trở về
+    <i class="fas fa-home"></i> Trở về Menu
   </button>
   
   <script>
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     
+    // ==================== HIDE LOADING ====================
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const loading = document.getElementById('loading');
+        loading.classList.add('hidden');
+      }, 1500);
+    });
+    
+
+    document.getElementById('streamable-player').addEventListener('load', () => {
+      setTimeout(() => {
+        document.getElementById('loading').classList.add('hidden');
+      }, 800);
+    });
+    
+    // ==================== CONFETTI EFFECT ====================
+    function createConfetti() {
+      for (let i = 0; i < 50; i++) {
+        setTimeout(() => {
+          const confetti = document.createElement('div');
+          confetti.className = 'confetti';
+          confetti.style.left = Math.random() * 100 + '%';
+          confetti.style.background = ['#FFD700', '#FFA500', '#FF6347', '#32CD32'][Math.floor(Math.random() * 4)];
+          confetti.style.animationDelay = Math.random() * 1 + 's';
+          document.body.appendChild(confetti);
+          
+          setTimeout(() => {
+            confetti.remove();
+          }, 3000);
+        }, i * 50);
+      }
+    }
+    
+
+    setTimeout(createConfetti, 2000);
+    
+    // ==================== RETURN TO MENU ====================
     function returnToMenu() {
-      const iframe = document.getElementById('youtube-iframe');
+      const iframe = document.getElementById('streamable-player');
+      const loading = document.getElementById('loading');
+      
+     
       iframe.src = '';
       
+  
+      loading.classList.remove('hidden');
+   
       setTimeout(() => {
         window.location.href = '../html/menu.html';
-      }, 100);
+      }, 300);
     }
     
-    // Mobile touch
+    // ==================== MOBILE TOUCH ====================
     if (isMobile) {
       const btn = document.querySelector('.return-btn');
-      btn.addEventListener('touchstart', () => {
+      
+      btn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
         btn.style.transform = 'scale(0.92)';
       });
-      btn.addEventListener('touchend', () => {
+      
+      btn.addEventListener('touchend', (e) => {
+        e.preventDefault();
         btn.style.transform = 'scale(1)';
+        returnToMenu();
       });
+      
+     
+      let lastTouchEnd = 0;
+      document.addEventListener('touchend', (e) => {
+        const now = Date.now();
+        if (now - lastTouchEnd <= 300) {
+          e.preventDefault();
+        }
+        lastTouchEnd = now;
+      }, false);
     }
     
-    // Keyboard
+    // ==================== KEYBOARD ====================
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' || e.key === 'Enter') {
         e.preventDefault();
         returnToMenu();
       }
     });
     
-    // Orientation
+    // ==================== ORIENTATION CHANGE ====================
     window.addEventListener('orientationchange', () => {
       setTimeout(() => window.scrollTo(0, 0), 100);
     });
     
-    // Cleanup
+    // ==================== CLEANUP ====================
     window.addEventListener('beforeunload', () => {
-      const iframe = document.getElementById('youtube-iframe');
+      const iframe = document.getElementById('streamable-player');
       iframe.src = '';
     });
+    
+    // ==================== PREVENT SCROLLING ====================
+    window.addEventListener('scroll', () => {
+      window.scrollTo(0, 0);
+    });
+    
+    document.addEventListener('touchmove', (e) => {
+      if (e.target !== document.querySelector('.return-btn')) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+    
+    console.log('🎉 Ending scene loaded!');
+    console.log('📹 Streamable video ID: jylnge');
+    console.log('⏰ Video sẽ tồn tại: 90 ngày (Streamable Free)');
   </script>
 </body>
 </html>

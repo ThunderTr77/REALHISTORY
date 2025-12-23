@@ -2,9 +2,10 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Thất Bại</title>
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -16,68 +17,116 @@
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
     }
-    body, html {
+    
+    html {
+      width: 100%;
+      height: 100%;
+    }
+    
+    body {
       overflow: hidden;
       background: #000;
       font-family: 'Segoe UI', Tahoma, sans-serif;
-      height: 100vh;
-      position: fixed;
       width: 100%;
-    }
-    canvas {
-      display: block;
-      width: 100vw;
-      height: 100vh;
+      height: 100%;
+      position: fixed;
+      touch-action: none;
+      overscroll-behavior: none;
     }
     
-    @media (max-width: 768px) {
-      body, html {
+    canvas {
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      max-width: 100vw;
+      max-height: 100vh;
+      object-fit: contain;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+    }
+    
+    @media (max-width: 425px) {
+      body {
         height: 100dvh;
       }
+      
       canvas {
+        max-height: 100dvh;
+      }
+    }
+    
+    @media (max-width: 375px) {
+      body {
         height: 100dvh;
+      }
+    }
+    
+    @media (max-height: 500px) and (orientation: landscape) {
+      body {
+        height: 100dvh;
+      }
+      
+      canvas {
+        max-height: 100dvh;
       }
     }
   </style>
 </head>
 <body>
 
-
-<!-- ========== AUDIO TAG AUTOPLAY ========== -->
 <audio id="bgAudio" autoplay loop muted preload="auto">
   <source src="../sound/fire.mp3" type="audio/mpeg">
 </audio>
 
-
 <canvas id="canvas"></canvas>
-
 
 <script>
 const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext('2d', { alpha: false });
 
-
-// ========== AUDIO SETUP ==========
 const bgAudio = document.getElementById('bgAudio');
 
-
-// Unmute ngay khi load
 window.addEventListener('load', () => {
   bgAudio.muted = false;
-  bgAudio.pause(); // Dừng background loop
+  bgAudio.pause();
 });
 
-
-// Tạo audio objects riêng cho fire và hit
 const fireSound = new Audio('../sound/fire.mp3');
 const hitSound = new Audio('../sound/hit.wav');
-
 
 fireSound.volume = 0.8;
 hitSound.volume = 0.9;
 
+let audioUnlocked = false;
+
+function unlockAudio() {
+  if (audioUnlocked) return;
+  
+  fireSound.play().then(() => {
+    fireSound.pause();
+    fireSound.currentTime = 0;
+  }).catch(() => {});
+  
+  hitSound.play().then(() => {
+    hitSound.pause();
+    hitSound.currentTime = 0;
+  }).catch(() => {});
+  
+  audioUnlocked = true;
+  console.log('✅ Audio unlocked!');
+}
+
+document.addEventListener('click', unlockAudio, { once: true });
+document.addEventListener('touchstart', unlockAudio, { once: true });
+document.addEventListener('keydown', unlockAudio, { once: true });
 
 function playFireSound() {
+  if (!audioUnlocked) {
+    unlockAudio();
+  }
   fireSound.currentTime = 0;
   fireSound.play().then(() => {
     console.log('✅ 🔫 Fire sound đã phát!');
@@ -86,8 +135,10 @@ function playFireSound() {
   });
 }
 
-
 function playHitSound() {
+  if (!audioUnlocked) {
+    unlockAudio();
+  }
   hitSound.currentTime = 0;
   hitSound.play().then(() => {
     console.log('✅ 💥 Hit sound đã phát!');
@@ -95,26 +146,46 @@ function playHitSound() {
     console.log('❌ Lỗi hit sound:', err);
   });
 }
-// =================================
 
+function getActualVH() {
+  return window.innerHeight || document.documentElement.clientHeight;
+}
+
+function getActualVW() {
+  return window.innerWidth || document.documentElement.clientWidth;
+}
 
 function resizeCanvas() {
-  canvas.width  = window.innerWidth;
-  canvas.height = window.innerHeight;
+  const vw = getActualVW();
+  const vh = getActualVH();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  
+  canvas.width = vw * dpr;
+  canvas.height = vh * dpr;
+  
+  ctx.scale(dpr, dpr);
+  
+  canvas.style.width = `${vw}px`;
+  canvas.style.height = `${vh}px`;
 }
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
 
+let resizeTimeout;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    resizeCanvas();
+  }, 100);
+});
+
+resizeCanvas();
 
 const bgImage   = new Image();
 const tankVN    = new Image();
 const tankEnemy = new Image();
 
-
 bgImage.src   = '../image/bg.jpg';
 tankVN.src    = '../image/tank1.png';
 tankEnemy.src = '../image/tank2.png';
-
 
 let loaded = 0;
 function onLoaded() {
@@ -127,14 +198,10 @@ bgImage.onload   = onLoaded;
 tankVN.onload    = onLoaded;
 tankEnemy.onload = onLoaded;
 
-
-// ============ DURATION============
-const BULLET_DURATION = 3000;
-const EXPLOSION_DURATION = 3000;
+const BULLET_DURATION = 800;
+const EXPLOSION_DURATION = 500;
 const MUZZLE_DELAY = 200;
 const BULLET_DELAY = 120;
-// ===================================
-
 
 let phase = 'prepare';
 let phaseStartTime = 0;
@@ -143,21 +210,13 @@ let tankVNPosX;
 let tankEnemyPosX;
 let tankY;
 
-
-// Muzzle flash
 let muzzleFlash = { active: false, x: 0, y: 0, frame: 0, maxFrame: 10 };
 
-
-// Bullet
 let bullet = null;
 
-
-// Explosion
 let combinedParticles = [];
 let tankFireParticles = [];
 
-
-// Defeat text
 let defeatText = {
   active: false,
   alpha: 1,
@@ -174,68 +233,86 @@ let defeatText = {
   maxShake: 20
 };
 
+let planes = [];
 
-// Rocket background
-const rocketFont = "300 32px 'Font Awesome 6 Free'";
-let rockets = [];
+function getCanvasSize() {
+  return {
+    width: getActualVW(),
+    height: getActualVH()
+  };
+}
 
-
-// --------- ROCKET ----------
-function spawnRocket() {
+function spawnPlane() {
+  const size = getCanvasSize();
   const fromLeft = Math.random() < 0.5;
-  const margin = canvas.width * 0.1;
-  const startX = fromLeft ? -margin : canvas.width + margin;
-  const endX   = fromLeft ? canvas.width + margin : -margin;
+  const margin = size.width * 0.05;
+  const startX = fromLeft ? -margin : size.width + margin;
+  const endX = fromLeft ? size.width + margin : -margin;
 
-
-  rockets.push({
-    fromLeft, startX, endX,
-    yBase: canvas.height * (0.15 + Math.random() * 0.2),
-    height: canvas.height * (0.08 + Math.random() * 0.08),
+  planes.push({
+    fromLeft,
+    startX,
+    endX,
+    y: size.height * (0.05 + Math.random() * 0.15),
+    waveAmplitude: size.height * (0.015 + Math.random() * 0.025),
+    waveFrequency: 2 + Math.random() * 2,
     t: 0,
-    speed: 0.002 + Math.random() * 0.003
+    speed: 0.003 + Math.random() * 0.004
   });
 }
 
-
-function getBallisticPos(startX, endX, baseY, height, t) {
+function getPlanePos(startX, endX, baseY, amplitude, frequency, t) {
   const x = startX + (endX - startX) * t;
-  const parabola = 4 * t * (1 - t);
-  const y = baseY - height * parabola;
+  const y = baseY + Math.sin(t * Math.PI * frequency) * amplitude;
   return { x, y };
 }
 
-
-function updateRockets() {
-  rockets.forEach(r => { r.t += r.speed; });
-  rockets = rockets.filter(r => {
-    if (r.t > 1.1) { spawnRocket(); return false; }
+function updatePlanes() {
+  planes.forEach(p => { p.t += p.speed; });
+  planes = planes.filter(p => {
+    if (p.t > 1.05) {
+      spawnPlane();
+      return false;
+    }
     return true;
   });
-  while (rockets.length < 5) spawnRocket();
+  while (planes.length < 4) spawnPlane();
 }
 
-
-function drawRockets() {
+function drawPlanes() {
+  const size = getCanvasSize();
+  const fontSize = Math.max(24, Math.min(size.width, size.height) * 0.06);
+  
   ctx.save();
-  ctx.font = rocketFont;
+  ctx.font = `300 ${fontSize}px Arial`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  rockets.forEach(r => {
-    const pos = getBallisticPos(r.startX, r.endX, r.yBase, r.height, r.t);
-    const angle = r.fromLeft ? Math.atan2(0.3, 1) : Math.atan2(-0.3, -1);
+
+  planes.forEach(p => {
+    const pos = getPlanePos(p.startX, p.endX, p.y, p.waveAmplitude, p.waveFrequency, p.t);
+    
+    const derivative = Math.cos(p.t * Math.PI * p.waveFrequency) * p.waveAmplitude * p.waveFrequency * Math.PI;
+    const dx = p.endX - p.startX;
+    const angle = Math.atan2(derivative, dx);
+    
     ctx.save();
     ctx.translate(pos.x, pos.y);
     ctx.rotate(angle);
+    
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    
     ctx.fillStyle = '#555';
-    ctx.fillText('🚀', 0, 0);
+    ctx.fillText('✈️', 0, 0);
+    
     ctx.restore();
   });
+
   ctx.restore();
 }
 
-
-// --------- MUZZLE FLASH ----------
 function startMuzzleFlash(x, y) {
   muzzleFlash.active = true;
   muzzleFlash.x = x;
@@ -245,7 +322,6 @@ function startMuzzleFlash(x, y) {
   playFireSound();
 }
 
-
 function updateMuzzleFlash() {
   if (muzzleFlash.active) {
     muzzleFlash.frame++;
@@ -254,7 +330,6 @@ function updateMuzzleFlash() {
     }
   }
 }
-
 
 function drawMuzzleFlash() {
   if (!muzzleFlash.active) return;
@@ -290,8 +365,6 @@ function drawMuzzleFlash() {
   ctx.restore();
 }
 
-
-// --------- BULLET ----------
 function createBullet(startX, startY, targetX, targetY, duration) {
   return {
     startX, startY, x: startX, y: startY,
@@ -301,7 +374,6 @@ function createBullet(startX, startY, targetX, targetY, duration) {
     trail: [], rotation: 0
   };
 }
-
 
 function updateBullet() {
   if (!bullet || !bullet.active) return;
@@ -318,7 +390,7 @@ function updateBullet() {
   bullet.trail.forEach((t, i) => { t.alpha = (i + 1) / bullet.trail.length; });
   
   if (defeatText.active && !defeatText.isHit && progress > 0.3) {
-    const textCenterX = canvas.width / 2;
+    const textCenterX = canvas.width / (Math.min(window.devicePixelRatio || 1, 2) * 2);
     const textCenterY = defeatText.failY;
     const distance = Math.sqrt(Math.pow(bullet.x - textCenterX, 2) + Math.pow(bullet.y - textCenterY, 2));
     
@@ -330,7 +402,6 @@ function updateBullet() {
   
   if (progress >= 1) bullet.active = false;
 }
-
 
 function drawBullet() {
   if (!bullet || !bullet.active) return;
@@ -345,7 +416,6 @@ function drawBullet() {
   });
   
   ctx.translate(bullet.x, bullet.y);
-
 
   const outerGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, 25);
   outerGlow.addColorStop(0, 'rgba(255, 255, 100, 0.8)');
@@ -366,7 +436,6 @@ function drawBullet() {
   ctx.arc(0, 0, 15, 0, Math.PI * 2);
   ctx.fill();
 
-
   ctx.rotate(bullet.rotation);
   ctx.strokeStyle = '#ffcc00';
   ctx.lineWidth = 3;
@@ -380,8 +449,6 @@ function drawBullet() {
   ctx.restore();
 }
 
-
-// --------- TANK FIRE ----------
 function spawnTankFire(cx, cy) {
   tankFireParticles = [];
   for (let i = 0; i < 30; i++) {
@@ -395,7 +462,6 @@ function spawnTankFire(cx, cy) {
     });
   }
 }
-
 
 function updateTankFire(cx, cy) {
   tankFireParticles.forEach(p => {
@@ -415,7 +481,6 @@ function updateTankFire(cx, cy) {
     });
   }
 }
-
 
 function drawTankFire(cx, cy) {
   ctx.save();
@@ -437,8 +502,6 @@ function drawTankFire(cx, cy) {
   ctx.restore();
 }
 
-
-// --------- EXPLOSION ----------
 function startCombinedExplosion(cx, cy, duration) {
   playHitSound();
   
@@ -446,7 +509,7 @@ function startCombinedExplosion(cx, cy, duration) {
   const frames = (duration / 1000) * 60;
   
   for (let i = 0; i < 200; i++) {
-    const angle = Math.random() * Math.PI * 2;
+    let angle = Math.random() * Math.PI * 2;
     const rand = Math.random();
     let type, speed;
     
@@ -475,7 +538,6 @@ function startCombinedExplosion(cx, cy, duration) {
   spawnTankFire(cx, cy);
 }
 
-
 function updateCombinedExplosion() {
   combinedParticles.forEach(p => {
     p.x += p.vx;
@@ -492,7 +554,6 @@ function updateCombinedExplosion() {
   });
   combinedParticles = combinedParticles.filter(p => p.life > 0);
 }
-
 
 function drawCombinedExplosion() {
   ctx.save();
@@ -532,8 +593,6 @@ function drawCombinedExplosion() {
   ctx.restore();
 }
 
-
-// --------- DEFEAT TEXT ----------
 function updateDefeatText() {
   if (!defeatText.active) return;
   
@@ -552,17 +611,22 @@ function updateDefeatText() {
   }
 }
 
-
 function drawDefeatText() {
   if (!defeatText.active) return;
   
+  const size = getCanvasSize();
+  const baseSize = Math.min(size.width, size.height);
+  const titleSize = Math.max(40, baseSize * 0.08);
+  const failSize = Math.max(45, baseSize * 0.09);
+  const iconSize = Math.max(30, baseSize * 0.055);
+  
   ctx.save();
   
-  const centerX = canvas.width / 2;
+  const centerX = size.width / 2;
   defeatText.titleX = centerX;
-  defeatText.titleY = canvas.height * 0.25;
+  defeatText.titleY = size.height * 0.25;
   defeatText.failX = centerX;
-  defeatText.failY = canvas.height * 0.35;
+  defeatText.failY = size.height * 0.35;
   
   let shakeX = 0, shakeY = 0;
   if (defeatText.isHit && defeatText.shakeFrame <= defeatText.maxShake) {
@@ -573,15 +637,15 @@ function drawDefeatText() {
   ctx.shadowColor = '#f00';
   ctx.shadowBlur = 30;
   
-  ctx.font = 'bold 70px Arial';
+  ctx.font = `bold ${titleSize}px Arial`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   
   ctx.strokeStyle = '#8B0000';
-  ctx.lineWidth = 6;
+  ctx.lineWidth = Math.max(4, titleSize * 0.08);
   ctx.strokeText('CHIẾN DỊCH', defeatText.titleX, defeatText.titleY);
   
-  const titleGradient = ctx.createLinearGradient(0, defeatText.titleY - 35, 0, defeatText.titleY + 35);
+  const titleGradient = ctx.createLinearGradient(0, defeatText.titleY - titleSize/2, 0, defeatText.titleY + titleSize/2);
   titleGradient.addColorStop(0, '#ff0000');
   titleGradient.addColorStop(0.5, '#cc0000');
   titleGradient.addColorStop(1, '#990000');
@@ -590,32 +654,33 @@ function drawDefeatText() {
   
   ctx.save();
 
-
-  const pivotX = defeatText.failX - 180; 
-  const pivotY = defeatText.failY - 40; 
+  const pivotOffsetX = failSize * 2.25;
+  const pivotOffsetY = failSize * 0.5;
+  const pivotX = defeatText.failX - pivotOffsetX; 
+  const pivotY = defeatText.failY - pivotOffsetY; 
   
   ctx.translate(pivotX + shakeX, pivotY + shakeY);
   ctx.rotate(defeatText.failCurrentAngle);
   
   ctx.shadowColor = '#f00';
   ctx.shadowBlur = 40;
-  ctx.font = 'bold 80px Arial';
+  ctx.font = `bold ${failSize}px Arial`;
   
   ctx.strokeStyle = '#8B0000';
-  ctx.lineWidth = 8;
-  ctx.strokeText('THẤT BẠI', 180, 40); 
+  ctx.lineWidth = Math.max(5, failSize * 0.1);
+  ctx.strokeText('THẤT BẠI', pivotOffsetX, pivotOffsetY); 
   
-  const swingGradient = ctx.createLinearGradient(0, 0, 0, 80);
+  const swingGradient = ctx.createLinearGradient(0, 0, 0, failSize);
   swingGradient.addColorStop(0, '#ff0000');
   swingGradient.addColorStop(0.5, '#ff3300');
   swingGradient.addColorStop(1, '#ff0000');
   ctx.fillStyle = swingGradient;
-  ctx.fillText('THẤT BẠI', 180, 40);
+  ctx.fillText('THẤT BẠI', pivotOffsetX, pivotOffsetY);
   
-  ctx.font = '50px "Font Awesome 6 Free"';
+  ctx.font = `${iconSize}px "Font Awesome 6 Free"`;
   ctx.fillStyle = '#cc0000';
-  ctx.fillText('\uf714', -20, 40);
-  ctx.fillText('\uf714', 380, 40);
+  ctx.fillText('\uf714', -iconSize * 0.4, pivotOffsetY);
+  ctx.fillText('\uf714', pivotOffsetX * 2 + iconSize * 0.4, pivotOffsetY);
   
   ctx.fillStyle = '#666';
   ctx.beginPath();
@@ -625,8 +690,8 @@ function drawDefeatText() {
   ctx.restore();
   
   if (defeatText.isHit) {
-    const nailX = defeatText.failX + 180;
-    const nailY = defeatText.failY - 40;
+    const nailX = defeatText.failX + pivotOffsetX;
+    const nailY = defeatText.failY - pivotOffsetY;
     
     if (defeatText.shakeFrame <= defeatText.maxShake) {
       ctx.fillStyle = 'rgba(255, 200, 0, 0.6)';
@@ -645,8 +710,6 @@ function drawDefeatText() {
   ctx.restore();
 }
 
-
-// --------- TANK DRAWING ----------
 function drawTank(img, x, y) {
   const scale = tankH / 55;
   const w = 90 * scale;
@@ -655,22 +718,20 @@ function drawTank(img, x, y) {
   return { w, h };
 }
 
-
-// --------- MAIN ANIMATION ----------
 function startAnimation() {
-  tankH = canvas.height * 0.25;
-  tankY = canvas.height * 0.65;
+  const size = getCanvasSize();
+  tankH = size.height * (size.width < 425 ? 0.22 : 0.25);
+  tankY = size.height * 0.65;
   
   const scale = tankH / 55;
   const tankW = 90 * scale;
-  const gap = canvas.width * 0.35;
+  const gap = size.width * 0.35;
   
-  tankVNPosX = canvas.width * 0.15;
+  tankVNPosX = size.width * 0.15;
   tankEnemyPosX = tankVNPosX + tankW + gap;
   
-  for (let i = 0; i < 5; i++) spawnRocket();
+  for (let i = 0; i < 4; i++) spawnPlane();
   
-  // TIMELINE
   setTimeout(() => {
     phase = 'muzzle_flash';
     const muzzleX = tankEnemyPosX;
@@ -699,15 +760,15 @@ function startAnimation() {
     phase = 'defeat';
   }, MUZZLE_DELAY + BULLET_DELAY + BULLET_DURATION + EXPLOSION_DURATION);
 
-
   function loop() {
     if (phase === 'ended') return;
     
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+    const size = getCanvasSize();
+    ctx.clearRect(0, 0, size.width, size.height);
+    ctx.drawImage(bgImage, 0, 0, size.width, size.height);
     
-    updateRockets();
-    drawRockets();
+    updatePlanes();
+    drawPlanes();
     
     drawTank(tankEnemy, tankEnemyPosX, tankY);
     
@@ -787,7 +848,15 @@ if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
     }
     lastTouchEnd = now;
   }, false);
+  
+  document.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+  }, { passive: false });
 }
+
+window.addEventListener('scroll', () => {
+  window.scrollTo(0, 0);
+});
 </script>
 </body>
 </html>
