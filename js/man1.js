@@ -42,20 +42,42 @@ function stopTypeSound() {
 
 // ==================== DATA ====================
 const LEVEL = 1;
-const THEORY_TEXT = "Tháng 3/1975, ta mở màn chiến dịch Tây Nguyên, sau đó mở rộng sang Huế – Đà Nẵng. Ngày 29/3, Đà Nẵng được giải phóng, tạo đà quan trọng để tiến vào Sài Gòn.";
+const THEORY_TEXT ="Mỹ thực hiện 'Chiến tranh cục bộ' (1965 – 1968) bằng quân Mỹ nòng cốt, quân đồng minh và quân Sài Gòn qua chiến thuật 'tìm diệt', 'bình định' cùng phá hoại miền Bắc. Đáp trả lại, quân dân ta thắng lớn tại Vạn Tường (1965), hai mùa khô (1965 – 1967) và tạo bước ngoặt quyết định với Tổng tiến công Xuân Mậu Thân 1968. Thất bại này buộc Mỹ phải 'phi Mỹ hóa' chiến tranh, ngừng phá hoại miền Bắc và chấp nhận ngồi vào bàn đàm phán tại Pa-ri";
+
 
 const QUESTIONS = [
   {
-    question: "Sự kiện nào tạo bước ngoặt quan trọng giúp ta đẩy nhanh tiến trình giải phóng miền Nam?",
-    answers: ["Giải phóng Huế", "Giải phóng Đà Nẵng", "Giải phóng Quảng Nam", "Giải phóng Buôn Ma Thuột"],
-    correct: 3
+    question: "Từ năm 1965, Mĩ chuyển sang thực hiện loại hình chiến tranh xâm lược nào ở miền Nam Việt Nam?",
+    answers: [
+      "“Đông Dương hóa chiến tranh”.",
+      "“Chiến tranh cục bộ”.",
+      "“Chiến tranh phá hoại”.",
+      "“Việt Nam hóa chiến tranh”"
+    ],
+    correct: 1
   },
   {
-    question: "Ngày 29/3/1975 gắn với sự kiện nào?",
-    answers: ["Ta giải phóng Đà Nẵng", "Ta tiến vào Sài Gòn", "Ta giải phóng Cần Thơ", "Ta chiếm căn cứ Tân Sơn Nhất"],
-    correct: 0
+    question: "Tại sao cuộc Tổng tiến công và nổi dậy xuân Mậu Thân 1968 lại mở ra bước ngoặt của cuộc kháng chiến chông Mĩ cứu nước?",
+    answers: [
+      "Vì buộc Mĩ phải kí kết Hiệp định Pari về chấm dứt chiến tranh Việt Nam.",
+      "Vì buộc Mĩ phải chấm dứt không điều kiện phá hoại miền Bắc.",
+      "Vì buộc Mỹ thừa nhận sự thất bại của chiến lược “Việt Nam hóa chiến tranh”, đến Pari đàm phán.",
+      "Vì làm lung lay ý chí và buộc Mĩ tuyên bố “Mĩ hóa” trở lại chiến tranh."
+    ],
+    correct: 2
+  },
+  {
+    question: "Điểm độc đáo trong thời điểm mở màn cuộc Tổng tiến công và nổi dậy Xuân Mậu Thân (1968) là:",
+    answers: [
+      "Tiến công vào Bộ tham mưu quân đội Sài Gòn",
+      "Mở đầu cuộc tiến công vào đêm giao thừa",
+      "Tiến công vào sân bay Tân Sơn Nhất",
+      "Tiến công vào các vị trí đầu não của địch tại Sài Gòn"
+    ],
+    correct: 1
   }
 ];
+
 
 // ==================== GAME STATE ====================
 let currentQuestionIndex = 0;
@@ -82,7 +104,7 @@ if (theoryPopup) {
   });
 }
 
-// Đóng popup khi nhấn ESC
+
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && theoryPopup.classList.contains('active')) {
     theoryPopup.classList.remove('active');

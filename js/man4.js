@@ -39,20 +39,31 @@ function stopTypeSound() {
 }
 
 const LEVEL = 4;
-const THEORY_TEXT = "Ngày 26/4/1975, quân ta bắt đầu tổng công kích từ 5 hướng. Không quân địch hoảng loạn, hệ thống phòng thủ bị tê liệt.";
+const THEORY_TEXT = "Sau Hiệp định Pa-ri (1973), Mỹ rút quân nhưng vẫn hỗ trợ chính quyền Sài Gòn lấn chiếm vùng giải phóng. Thắng lợi Phước Long (1-1975) đã củng cố quyết tâm giải phóng hoàn toàn miền Nam của Bộ Chính trị. Cuộc Tổng tiến công và nổi dậy Xuân 1975 diễn ra thần tốc qua ba chiến dịch lớn: Tây Nguyên (mở màn bằng trận Buôn Ma Thuột), Huế – Đà Nẵng và đỉnh cao là Chiến dịch Hồ Chí Minh.";
 
 const QUESTIONS = [
   {
-    question: "Ta bắt đầu tổng công kích vào Sài Gòn từ ngày nào?",
-    answers: ["21/4", "26/4", "28/4", "29/4"],
-    correct: 1
+    question: "Thắng lợi của chiến dịch nào sau đây ghi nhận cuộc kháng chiến chống Mỹ, cứu nước của nhân dân Việt Nam đã kết thúc thắng lợi?",
+    answers: [
+      "Chiến dịch Hồ Chí Minh.",
+      "Chiến dịch Tây Nguyên.",
+      "Chiến dịch Huế - Đà Nẵng.",
+      "Chiến dịch Dường 14 - Phước Long."
+    ],
+    correct: 0
   },
   {
-    question: "Tướng Dương Văn Minh tuyên bố đầu hàng vào thời điểm nào?",
-    answers: ["7h30 – 30/4", "8h30 – 30/4", "9h – 30/4", "11h – 30/4"],
-    correct: 3
+    question: "Nguyên nhân cơ bản nhất quyết định thắng lợi của Chiến dịch Hồ Chí Minh là gì?",
+    answers: [
+      "Sự giúp đỡ của Liên Xô và Trung Quốc.",
+      "Sự lãnh đạo tài tình, sáng suốt của Đảng Lao động Việt Nam, sự chuẩn bị lực lượng chu đáo và nghệ thuật quân sự đỉnh cao.",
+      "Quân đội Sài Gòn yếu kém về trang bị.",
+      "Mĩ hoàn toàn không còn can thiệp."
+    ],
+    correct: 1
   }
 ];
+
 
 let currentQuestionIndex = 0;
 let timerInterval;

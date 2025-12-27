@@ -39,20 +39,41 @@ function stopTypeSound() {
 }
 
 const LEVEL = 3;
-const THEORY_TEXT = "Xuân Lộc là phòng tuyến mạnh nhất của địch. Sau 12 ngày chiến đấu quyết liệt (9–21/4), ta làm chủ chiến trường. Đây là trận đánh quyết định mở toang cửa ngõ Sài Gòn.";
+const THEORY_TEXT = "Giai đoạn 1965 – 1973, miền Bắc thực hiện hai nhiệm vụ: chống chiến tranh phá hoại và chi viện tiền tuyến. Ta bắn rơi 3.243 máy bay (1965 – 1968) và đánh bại cuộc tập kích B-52 bằng thắng lợi “Điện Biên Phủ trên không” (1972), buộc Mỹ ký Hiệp định Pa-ri (1973). Với vai trò hậu phương lớn, miền Bắc đã chi viện hơn 30 vạn quân cùng khối lượng khổng lồ vũ khí, vật chất cho miền Nam qua đường bộ và đường biển.";
 
 const QUESTIONS = [
   {
-    question: "Trận đánh quyết định mở cửa vào Sài Gòn là trận nào?",
-    answers: ["Long Khánh", "Xuân Lộc", "Củ Chi", "Bình Dương"],
-    correct: 1
+    question: "Đâu không phải là nguyên nhân khiến Mĩ tiến hành cuộc chiến tranh phá hoại miền Bắc lần thứ nhất (1965-1968)?",
+    answers: [
+      "Để phá tiềm lực kinh tế, quốc phòng và công cuộc xây dựng CNXH ở miền Bắc",
+      "Ngăn chặn nguồn chi viện từ bên ngoài vào miền Bắc và từ miền Bắc cho miền Nam",
+      "Uy hiếp tinh thần, làm lung lay ý chí chống Mĩ của nhân dân ở hai miền đất nước",
+      "Tạo ưu thế cho cuộc đàm phán ngoại giao giữa Mĩ và Việt Nam tại Pa-ri"
+    ],
+    correct: 3
   },
   {
-    question: "Xuân Lộc thất thủ vào ngày nào?",
-    answers: ["21/4/1975", "26/4/1975", "30/4/1975", "1/5/1975"],
-    correct: 0
+    question: "Quân dân miền Bắc đánh bại chiến tranh phá hoại lần thứ nhất của Mĩ mang ý nghĩa gì quan trọng nhất?",
+    answers: [
+      "Thể hiện quyết tâm đánh thắng giặc Mĩ của quân dân ta.",
+      "Làm lung lay ý chí xâm lược của đế quốc Mĩ.",
+      "Bảo vệ thành quả chủ nghĩa xã hội ở miền Bắc",
+      "Đánh bại âm mưu phá hoại miền Bắc của đế quốc Mĩ, đảm bảo sự chi viện cho miền Nam"
+    ],
+    correct: 3
+  },
+  {
+    question: "Ý nghĩa lớn nhất của chiến thắng “Điện Biên Phủ trên không” năm 1972 là gì?",
+    answers: [
+      "Đập an âm mưu xâm lược của đế quốc Mĩ",
+      "Khẳng định ý chí quyết chiến, quyết thắng của quân dân ta",
+      "Buộc Mĩ phải kí hiệp định Pa – ri chấm dứt chiến tranh xâm lược Việt Nam.",
+      "Đập an âm mưu xâm lược của thực dân Pháp"
+    ],
+    correct: 2
   }
 ];
+
 
 let currentQuestionIndex = 0;
 let timerInterval;

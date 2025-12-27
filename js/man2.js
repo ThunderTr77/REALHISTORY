@@ -39,20 +39,31 @@ function stopTypeSound() {
 }
 
 const LEVEL = 2;
-const THEORY_TEXT = "Chiến dịch Hồ Chí Minh được quyết định mở vào ngày 14/4/1975. Năm cánh quân đồng loạt tiến vào Sài Gòn, tạo áp lực mạnh mẽ lên toàn bộ hệ thống phòng thủ của chính quyền Sài Gòn.";
+const THEORY_TEXT = "Chiến lược “Việt Nam hoá chiến tranh” (1969 – 1973) sử dụng quân đội Sài Gòn là chủ yếu kết hợp hoả lực Mỹ để thực hiện âm mưu “dùng người Việt đánh người Việt” và mở rộng sang toàn Đông Dương. Quân dân ta đã đối phó bằng cách thành lập Chính phủ Cách mạng lâm thời (1969) và phối hợp với quân dân Lào, Cam-pu-chia đập tan các cuộc hành quân xâm lược của địch. Cuối cùng, thắng lợi của cuộc Tiến công chiến lược năm 1972 đã buộc Mỹ phải “Mỹ hoá” trở lại chiến tranh, chính thức thừa nhận sự thất bại của chiến lược “Việt Nam hoá”";
 
 const QUESTIONS = [
   {
-    question: "Chiến dịch Hồ Chí Minh được mở vào ngày nào?",
-    answers: ["10/4/1975", "14/4/1975", "26/4/1975", "30/4/1975"],
-    correct: 1
+    question: 'Thực hiện chiến lược "Việt Nam hoá chiến tranh", Mĩ đã',
+    answers: [
+      "tăng cường quân đội viễn chinh Mĩ sang chiến trường miền Nam Việt Nam.",
+      "tăng cường một số lượng lớn quân đội đồng minh vào miền Nam Việt Nam.",
+      "tăng cường quân đội ngụy nhằm thay thế dần vai trò của quân Mĩ trên chiến trường.",
+      "giữ nguyên số quân Mĩ và chư hầu ở miền Nam, phát triển ngụy quân thành lực lượng chủ lực."
+    ],
+    correct: 2
   },
   {
-    question: "Chiến dịch Hồ Chí Minh có bao nhiêu cánh quân?",
-    answers: ["1", "3", "4", "5"],
-    correct: 3
+    question: "Sự kiện chính trị – ngoại giao quan trọng thể hiện vai trò đại diện hợp pháp của nhân dân miền Nam là :",
+    answers: [
+      "Hiệp định Giơnevơ",
+      "Hội nghị Pa-ri",
+      "Thành lập Chính phủ Cách mạng lâm thời Cộng hòa Miền Nam Việt Nam",
+      "Tổng tuyển cử."
+    ],
+    correct: 2
   }
 ];
+
 
 let currentQuestionIndex = 0;
 let timerInterval;
