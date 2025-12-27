@@ -39,7 +39,7 @@ function stopTypeSound() {
 }
 
 const LEVEL = 2;
-const THEORY_TEXT = "Chiến lược “Việt Nam hoá chiến tranh” (1969 – 1973) sử dụng quân đội Sài Gòn là chủ yếu kết hợp hoả lực Mỹ để thực hiện âm mưu “dùng người Việt đánh người Việt” và mở rộng sang toàn Đông Dương. Quân dân ta đã đối phó bằng cách thành lập Chính phủ Cách mạng lâm thời (1969) và phối hợp với quân dân Lào, Cam-pu-chia đập tan các cuộc hành quân xâm lược của địch. Cuối cùng, thắng lợi của cuộc Tiến công chiến lược năm 1972 đã buộc Mỹ phải “Mỹ hoá” trở lại chiến tranh, chính thức thừa nhận sự thất bại của chiến lược “Việt Nam hoá”";
+const THEORY_TEXT = "Chiến lược “Việt Nam hoá chiến tranh” (1969 – 1973) sử dụng quân đội Sài Gòn là chủ yếu kết hợp hoả lực Mỹ để thực hiện âm mưu “dùng người Việt đánh người Việt” và mở rộng sang toàn Đông Dương. Quân dân ta đã đối phó bằng cách thành lập Chính phủ Cách mạng lâm thời (1969) và phối hợp với quân dân Lào, Cam-pu-chia đập tan các cuộc hành quân xâm lược của địch.";
 
 const QUESTIONS = [
   {
